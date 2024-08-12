@@ -1,0 +1,14 @@
+.swiper-button-next,
+.swiper-button-prev {
+  color: #000; /* Customize the navigation button color */
+}
+
+.swiper-pagination-bullet {
+  background-color: #000; /* Customize the pagination bullet color */
+}
+
+.swiper-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
