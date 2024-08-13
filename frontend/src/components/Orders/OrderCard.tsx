@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Order, Dish } from "../../types";
 import OrderItems from "./OrderItems";
 import { useUpdateOrderStatus } from "../../hooks/useUpdateOrderStatus";
-import { useGenerateBill } from "../../hooks/useGenerateBill";
-import { useNavigate } from "react-router-dom";
-import { api } from "@/services/api";
+import KitchenPrint from "./KitchenPrint";
+import SalesPrint from "./SalesPrint";
+import { useReactToPrint } from "react-to-print";
 
 interface OrderCardProps {
   order: Order;
@@ -14,34 +14,32 @@ interface OrderCardProps {
 const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   const [status, setStatus] = useState(order.status);
   const { updateOrderStatus, isLoading: isUpdating } = useUpdateOrderStatus();
-  const [loading, setLoading] = useState(false)
-  const { generateBill, isLoading: isGeneratingBill } = useGenerateBill();
   const [showModal, setShowModal] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const navigate = useNavigate();
+  const [billType, setBillType] = useState("");
+  const kitchenPrintRef = useRef(null);
+  const salesPrintRef = useRef(null);
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value as Order['status'];
     setStatus(newStatus);
-    updateOrderStatus({ orderId: order.id, status: newStatus});
+    updateOrderStatus({ orderId: order.id, status: newStatus });
   };
 
   const handleGenerateBill = () => {
     setShowModal(true);
   };
 
-  const handleSendPdf = async () => {
-    setLoading(true);
-    try {
-      await api.post(`http://127.0.0.1:8000/orders/${order.id}/generate_and_send_pdf/`, { phone_number: phoneNumber });
-      setShowModal(false);
-      generateBill({ orderId: order.id, totalAmount: order.total_amount });
-      setLoading(false)
-      navigate("/bills");
-    } catch (error) {
-      setLoading(false)
-      console.error("Error sending PDF:", error);
-    }
+  const handleBillTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setBillType(e.target.value);
+  };
+
+  const handlePrint = useReactToPrint({
+    content: () => (billType === "kitchen" ? kitchenPrintRef.current : salesPrintRef.current),
+  });
+
+  const handleGenerate = () => {
+    handlePrint();
+    setShowModal(false);
   };
 
   return (
@@ -49,8 +47,8 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Order #{order.id}</h2>
         <div className="flex items-center space-x-2">
-          <select 
-            value={status} 
+          <select
+            value={status}
             onChange={handleStatusChange}
             className="border rounded p-1"
             disabled={isUpdating}
@@ -61,10 +59,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             <option value="delivered">Delivered</option>
           </select>
           {status === 'delivered' && !order.bill_generated && (
-            <button 
+            <button
               onClick={handleGenerateBill}
               className="bg-green-500 text-white px-3 py-1 rounded"
-              disabled={isGeneratingBill}
             >
               Generate Bill
             </button>
@@ -88,31 +85,43 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
       {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">Enter Phone Number</h3>
-            <input 
-              type="text"
-              value={phoneNumber} 
-              onChange={(e) => setPhoneNumber(e.target.value)}
+            <h3 className="text-lg font-semibold mb-4">Select Bill Type</h3>
+            <select
+              value={billType}
+              onChange={handleBillTypeChange}
               className="border rounded px-2 py-2 w-full mb-4"
-              placeholder="Enter phone number"
-            />
+            >
+              <option value="">Select bill type</option>
+              <option value="kitchen">Kitchen Bill</option>
+              <option value="sales">Sales Bill</option>
+            </select>
             <div className="flex justify-end">
-              <button 
+              <button
                 onClick={() => setShowModal(false)}
                 className="bg-gray-500 text-white px-3 py-1 rounded mr-2"
               >
                 Cancel
               </button>
-              <button 
-                onClick={handleSendPdf}
+              <button
+                onClick={handleGenerate}
                 className="bg-green-500 text-white px-3 py-1 rounded"
+                disabled={!billType}
               >
-                {loading ? 'Sending...' : 'Send'}
+                Generate Bill
               </button>
             </div>
           </div>
         </div>
       )}
+
+      <div className="hidden">
+        <div ref={kitchenPrintRef}>
+          <KitchenPrint order={order} dishes={dishes} />
+        </div>
+        <div ref={salesPrintRef}>
+          <SalesPrint order={order} dishes={dishes} />
+        </div>
+      </div>
     </div>
   );
 };

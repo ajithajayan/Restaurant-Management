@@ -101,7 +101,7 @@ const SalesReportPage: React.FC = () => {
               {paginatedReports.map((report) => (
                 <tr key={report.id}>
                   <td className="px-6 py-4 whitespace-nowrap">{report.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{report.total_amount}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">QR{report.total_amount}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{report.status}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{report.order_type}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{report.payment_method}</td>

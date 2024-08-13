@@ -11,7 +11,6 @@ const HomePage: React.FC = () => {
     iconType: 'Delivery' | 'Dining' | 'Takeaway';
   } | null>(null);
 
-  // Ensure that the iconType values are correct literal types
   const cards = [
     { id: 1, title: 'Delivery Orders', content: 'Details of Delivery Orders', iconType: 'Delivery' as 'Delivery' },
     { id: 2, title: 'Dining Orders', content: 'Details of Dining Orders', iconType: 'Dining' as 'Dining' },
