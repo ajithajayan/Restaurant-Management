@@ -84,37 +84,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(order_type=order_type)
         return queryset
 
-    @action(detail=True, methods=["post"])
-    def generate_and_send_pdf(self, request, pk=None):
-        order = self.get_object()
-        phone_number = request.data.get("phone_number")
-
-        if not phone_number:
-            return Response(
-                {"error": "Phone number is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        pdf_buffer = generate_order_pdf(order)
-        customer_phone_number = f"whatsapp:+91{phone_number}"
-
-        pdf_file = ContentFile(pdf_buffer.getvalue())
-        pdf_path = default_storage.save(f"orders/order_{order.id}.pdf", pdf_file)
-
-        scheme = request.scheme
-        host = request.get_host()
-        pdf_url = default_storage.url(pdf_path)
-        full_path_url = f"{scheme}://{host}/{pdf_url}"
-        short_url = shorten_url(full_path_url)
-
-        message = f"Thanl you for your purchase.\n\nYour order details: {short_url}"
-        send_sms(customer_phone_number, message)
-
-        return Response(
-            {"message": "PDF generated and sent successfully"},
-            status=status.HTTP_200_OK,
-        )
-
+   
     def get_queryset_by_time_range(self, time_range):
         end_date = timezone.now()
         if time_range == "day":
