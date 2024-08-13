@@ -197,3 +197,61 @@ class Coupon(models.Model):
             return amount - self.discount_amount
         return amount
 
+
+class MessType(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+class MessMenu(models.Model):
+    name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    total_price = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return self.name
+
+class MessMenuDish(models.Model):
+    DAY_CHOICES = [
+        ('monday', 'Monday'),
+        ('tuesday', 'Tuesday'),
+        ('wednesday', 'Wednesday'),
+        ('thursday', 'Thursday'),
+        ('friday', 'Friday'),
+        ('saturday', 'Saturday'),
+        ('sunday', 'Sunday'),
+    ]
+    mess_menu = models.ForeignKey(MessMenu, on_delete=models.CASCADE)
+    dish = models.ForeignKey(Dish, on_delete=models.CASCADE)
+    day_of_week = models.CharField(max_length=20, choices=DAY_CHOICES)
+    meal_type = models.CharField(max_length=20, choices=[
+        ('breakfast', 'Breakfast'),
+        ('lunch', 'Lunch'),
+        ('dinner', 'Dinner')
+    ])
+
+    def __str__(self):
+        return f'{self.mess_menu} - {self.dish} ({self.meal_type} on {self.day_of_week})'
+
+class Mess(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    mess_type = models.ForeignKey(MessType, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    dishes = models.ManyToManyField(Dish, through='SelectedDish')
+    total_price = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f'{self.user} - {self.mess_type.name}'
+
+class SelectedDish(models.Model):
+    mess = models.ForeignKey(Mess, on_delete=models.CASCADE)
+    dish = models.ForeignKey(Dish, on_delete=models.CASCADE)
+    meal_type = models.CharField(max_length=20, choices=[
+        ('breakfast', 'Breakfast'),
+        ('lunch', 'Lunch'),
+        ('dinner', 'Dinner')
+    ])
+
+    def __str__(self):
+        return f'{self.mess} - {self.dish} ({self.meal_type})'
