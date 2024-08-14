@@ -18,7 +18,10 @@ from restaurant_app.views import (
     UserRegisterViewSet,
     FloorViewSet,
     TableViewSet,
-    CouponViewSet
+    CouponViewSet,
+    MenuViewSet,
+    MenuItemViewSet,
+    MessViewSet
 )
 
 router = DefaultRouter()
@@ -32,6 +35,9 @@ router.register(r'notifications', NotificationViewSet, basename='notifications')
 router.register(r'floors', FloorViewSet, basename='floors')
 router.register(r'tables', TableViewSet, basename='tables')
 router.register(r'coupons', CouponViewSet)
+router.register(r'menus', MenuViewSet)
+router.register(r'menu-items', MenuItemViewSet)
+router.register(r'messes', MessViewSet)
 
 
 urlpatterns = [

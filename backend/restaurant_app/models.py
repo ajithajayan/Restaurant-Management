@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from datetime import date
+
 
 
 class Customer(AbstractUser):
@@ -198,60 +200,66 @@ class Coupon(models.Model):
         return amount
 
 
-class MessType(models.Model):
-    name = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.name
-
-class MessMenu(models.Model):
-    name = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
-    total_price = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
-
-    def __str__(self):
-        return self.name
-
-class MessMenuDish(models.Model):
-    DAY_CHOICES = [
+class Menu(models.Model):
+    DAY_OF_WEEK_CHOICES = [
         ('monday', 'Monday'),
         ('tuesday', 'Tuesday'),
         ('wednesday', 'Wednesday'),
         ('thursday', 'Thursday'),
         ('friday', 'Friday'),
         ('saturday', 'Saturday'),
-        ('sunday', 'Sunday'),
+        ('sunday', 'Sunday')
     ]
-    mess_menu = models.ForeignKey(MessMenu, on_delete=models.CASCADE)
-    dish = models.ForeignKey(Dish, on_delete=models.CASCADE)
-    day_of_week = models.CharField(max_length=20, choices=DAY_CHOICES)
-    meal_type = models.CharField(max_length=20, choices=[
+    
+    MEAL_TYPE_CHOICES = [
         ('breakfast', 'Breakfast'),
         ('lunch', 'Lunch'),
         ('dinner', 'Dinner')
-    ])
+    ]
+
+    name = models.CharField(max_length=255)
+    creater = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    day_of_week = models.CharField(max_length=9, choices=DAY_OF_WEEK_CHOICES, blank=True, null=True)
+    meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES, blank=True, null=True)
+    total_price = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    is_custom = models.BooleanField(default=False)  # False for predefined, True for custom
 
     def __str__(self):
-        return f'{self.mess_menu} - {self.dish} ({self.meal_type} on {self.day_of_week})'
+        return self.name
+
+
+class MenuItem(models.Model):
+    menu = models.ForeignKey(Menu, related_name='menu_items', on_delete=models.CASCADE)
+    dish = models.ForeignKey(Dish, on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return f"{self.quantity} x {self.dish.name}"
 
 class Mess(models.Model):
+    MESS_TYPE_CHOICES = [
+        ('combo', 'Combo'),
+        ('breakfast_lunch', 'Breakfast and Lunch'),
+        ('breakfast_dinner', 'Breakfast and Dinner'),
+        ('lunch_dinner', 'Lunch and Dinner')
+    ]
+
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    mess_type = models.ForeignKey(MessType, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    dishes = models.ManyToManyField(Dish, through='SelectedDish')
-    total_price = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    menu = models.ForeignKey(Menu, on_delete=models.CASCADE)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    mess_type = models.CharField(max_length=20, choices=MESS_TYPE_CHOICES)
 
     def __str__(self):
-        return f'{self.user} - {self.mess_type.name}'
+        return f"{self.customer.user.username}'s Mess Selection"
 
-class SelectedDish(models.Model):
-    mess = models.ForeignKey(Mess, on_delete=models.CASCADE)
-    dish = models.ForeignKey(Dish, on_delete=models.CASCADE)
-    meal_type = models.CharField(max_length=20, choices=[
-        ('breakfast', 'Breakfast'),
-        ('lunch', 'Lunch'),
-        ('dinner', 'Dinner')
-    ])
+    def is_valid(self):
+        """
+        Check if the Mess is currently valid based on the start and expire dates.
+        """
+        today = date.today()
+        if self.start_date and self.expire_date:
+            return self.start_date <= today <= self.expire_date
+        return True  
 
-    def __str__(self):
-        return f'{self.mess} - {self.dish} ({self.meal_type})'
+    class Meta:
+        unique_together = ('customer', 'menu', 'mess_type') 

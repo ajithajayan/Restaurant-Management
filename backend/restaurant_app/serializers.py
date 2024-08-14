@@ -98,3 +98,21 @@ class CouponSerializer(serializers.ModelSerializer):
             'description'
         ]
         read_only_fields = ['usage_count'] 
+
+
+class MenuItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MenuItem
+        fields = '__all__'
+
+class MenuSerializer(serializers.ModelSerializer):
+    menu_items = MenuItemSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Menu
+        fields = '__all__'
+
+class MessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Mess
+        fields = '__all__'
