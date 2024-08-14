@@ -112,7 +112,10 @@ class MenuSerializer(serializers.ModelSerializer):
         model = Menu
         fields = '__all__'
 
+
+# updated
 class MessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mess
         fields = '__all__'
+
