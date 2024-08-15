@@ -318,4 +318,4 @@ class MenuItemViewSet(viewsets.ModelViewSet):
 
 class MessViewSet(viewsets.ModelViewSet):
     queryset = Mess.objects.all()
-    serializer_class = MessSerializer
+    serializer_class = MessSerializer   

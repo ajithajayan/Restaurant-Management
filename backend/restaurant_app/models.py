@@ -218,7 +218,6 @@ class Menu(models.Model):
     ]
 
     name = models.CharField(max_length=255)
-    creater = models.ForeignKey(Customer, on_delete=models.CASCADE)
     day_of_week = models.CharField(max_length=9, choices=DAY_OF_WEEK_CHOICES, blank=True, null=True)
     meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES, blank=True, null=True)
     total_price = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
@@ -242,8 +241,8 @@ class Mess(models.Model):
         ('breakfast_dinner', 'Breakfast and Dinner'),
         ('lunch_dinner', 'Lunch and Dinner')
     ]
-
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    customer_name = models.CharField(max_length=50,unique=True)
+    mobile_number = models.CharField(max_length=15, blank=True)
     menu = models.ForeignKey(Menu, on_delete=models.CASCADE)
     start_date = models.DateField()
     end_date = models.DateField()
@@ -262,4 +261,4 @@ class Mess(models.Model):
         return True  
 
     class Meta:
-        unique_together = ('customer', 'menu', 'mess_type') 
+        unique_together = ('menu', 'mess_type') 
