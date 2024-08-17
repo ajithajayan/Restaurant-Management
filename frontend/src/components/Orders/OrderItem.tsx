@@ -25,7 +25,7 @@ const OrderItem: React.FC<any> = ({
           {orderItem ? orderItem.name : "Loading..."}
         </h4>
         <span className="text-red-500">
-          QR{orderItem ? orderItem.price : "0.00"}
+          QAR {orderItem ? orderItem.price : "0.00"}
         </span>
       </div>
       <div>

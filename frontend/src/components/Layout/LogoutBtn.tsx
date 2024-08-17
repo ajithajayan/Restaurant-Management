@@ -21,7 +21,7 @@ const LogoutBtn: React.FC = () => {
   };
 
   return (
-    <button className="w-full flex items-center space-x-2 px-3 hover:text-red-500 cursor-pointer mt-2 justify-start py-1 rounded-md focus:outline-none"
+    <button className="w-full flex items-center space-x-2 px-3 hover:text-red-500 cursor-pointer mt-2 justify-start py-1 rounded-md focus:outline-none font-bold"
     onClick={handleLogout}
       >
         <LogOutIcon />

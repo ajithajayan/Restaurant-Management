@@ -79,7 +79,7 @@ const DiningTablePage: React.FC = () => {
 
   return (
     <Layout>
-      <div className={`flex-1 flex flex-col p-4 bg-[#52088E] ${isModalOpen ? 'backdrop-blur-sm' : ''}`}>
+      <div className={`flex-1 flex flex-col p-4 bg-[#8D4CF957] ${isModalOpen ? 'backdrop-blur-sm' : ''}`}>
         <div className="flex justify-between mb-4">
           <div className="text-white text-2xl">Dining Table</div>
           <RealTimeClock />

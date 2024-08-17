@@ -37,14 +37,14 @@ const SalesPrint: React.FC<SalesPrintProps> = ({ order, dishes }) => {
             <div key={index} className="print-item flex justify-between mb-1">
               <span className="print-item-name">{dish ? dish.name : 'Unknown Dish'}</span>
               <span className="print-item-quantity">{item.quantity}x</span>
-              <span className="print-item-price">QR{dish ? dish.price * item.quantity : 0}</span>
+              <span className="print-item-price">QAR {dish ? dish.price * item.quantity : 0}</span>
             </div>
           );
         })}
       </div>
       <div className="print-summary mt-4 text-right">
         <div className="print-total-quantity">Total Quantity: {totalQuantity}</div>
-        <div className="print-total-amount font-bold">Total Amount: QR{order.total_amount}</div>
+        <div className="print-total-amount font-bold">Total Amount: QAR {order.total_amount}</div>
       </div>
     </div>
   );

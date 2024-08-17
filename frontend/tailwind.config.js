@@ -20,6 +20,7 @@ module.exports = {
       colors: {
         customPurple: '#52088E',
         customLightPurple: '#8D4CF9',
+        customLightPurple2: '#8D4CF957',
         customPink: '#D56EF9',
       },
       keyframes: {
