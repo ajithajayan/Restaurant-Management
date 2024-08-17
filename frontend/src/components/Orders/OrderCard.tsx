@@ -54,9 +54,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             disabled={isUpdating}
           >
             <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
+            <option value="approved">Kitchen Bill</option>
             <option value="cancelled">Cancelled</option>
-            <option value="delivered">Delivered</option>
+            <option value="delivered">Order Success</option>
           </select>
           {status === 'delivered' && !order.bill_generated && (
             <button
@@ -78,7 +78,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
       </div>
       <div className="mt-4 flex justify-end items-center">
         <span className="text-lg font-semibold">
-          Total: QR{order.total_amount}
+          Total: QAR {order.total_amount}
         </span>
       </div>
 

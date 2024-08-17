@@ -32,9 +32,10 @@ import DashboardCard from "@/components/Dashboard/DashboardCard";
 import { DashboardData } from "@/types";
 import {
   TrendingUpIcon,
-  DollarSignIcon,
+  // DollarSignIcon,
   ShoppingCartIcon,
   ClockIcon,
+  Wallet,
 } from "lucide-react";
 import Loader from "@/components/Layout/Loader";
 import Layout from "@/components/Layout/Layout";
@@ -104,8 +105,8 @@ const RestaurantDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <DashboardCard
             title="Total Income"
-            value={`$${totalIncome.toLocaleString()}`}
-            icon={<DollarSignIcon className="h-4 w-4 text-muted-foreground" />}
+            value={`QAR ${totalIncome.toLocaleString()}`}
+            icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
             trend={dashboardData.total_income_trend}
           />
           <DashboardCard
@@ -123,7 +124,7 @@ const RestaurantDashboard: React.FC = () => {
           />
           <DashboardCard
             title="Average Order Value"
-            value={`$${avgOrderValue.toFixed(2)}`}
+            value={`QAR ${avgOrderValue.toFixed(2)}`}
             icon={<TrendingUpIcon className="h-4 w-4 text-muted-foreground" />}
             trend={dashboardData.avg_order_value_trend}
           />
@@ -148,7 +149,7 @@ const RestaurantDashboard: React.FC = () => {
                     type="monotone"
                     dataKey="total_sales"
                     stroke="#8884d8"
-                    name="Total Sales ($)"
+                    name="Total Sales (QAR)"
                   />
                   <Line
                     yAxisId="right"
@@ -204,10 +205,9 @@ const RestaurantDashboard: React.FC = () => {
                     {categorySales.map((index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
+                        fill={COLORS[index.value % COLORS.length]}
                       />
                     ))}
-
                   </Pie>
                   <Tooltip />
                 </PieChart>
@@ -224,15 +224,20 @@ const RestaurantDashboard: React.FC = () => {
                 <RadarChart outerRadius={90} data={formattedPopularTimeSlots}>
                   <PolarGrid />
                   <PolarAngleAxis dataKey="formattedHour" />
-                  <PolarRadiusAxis angle={30} domain={[0, 'auto']} />
-                  <Radar name="Order Count" dataKey="order_count" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+                  <PolarRadiusAxis angle={30} domain={[0, "auto"]} />
+                  <Radar
+                    name="Order Count"
+                    dataKey="order_count"
+                    stroke="#8884d8"
+                    fill="#8884d8"
+                    fillOpacity={0.6}
+                  />
                   <Tooltip />
                   <Legend />
                 </RadarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
-
         </div>
       </div>
       <h1 className="text-3xl font-bold mt-5">Main Dishes</h1>

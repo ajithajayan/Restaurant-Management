@@ -42,8 +42,8 @@ const OrderItems: React.FC<OrderItemsProps> = ({ orderItem, dishes }) => {
         </div>
       </div>
       <div className="text-right">
-        <p className="font-semibold">QR{(dish.price * orderItem.quantity).toFixed(2)}</p>
-        <p className="text-sm text-gray-600">QR{dish.price} each</p>
+        <p className="font-semibold">QAR {(dish.price * orderItem.quantity).toFixed(2)}</p>
+        <p className="text-sm text-gray-600">QAR {dish.price} each</p>
       </div>
     </div>
   );

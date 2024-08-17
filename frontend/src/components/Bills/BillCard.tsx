@@ -37,7 +37,7 @@ const BillCard: React.FC<BillCardProps> = ({ bill }) => {
           {bill.paid ? "Paid" : "Unpaid"}
         </span>
         <span className="text-lg font-semibold">
-          Total Amount: ${bill.total_amount}
+          Total Amount: QAR {bill.total_amount}
         </span>
       </div>
     </div>
