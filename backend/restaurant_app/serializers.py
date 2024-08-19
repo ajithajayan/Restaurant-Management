@@ -100,22 +100,29 @@ class CouponSerializer(serializers.ModelSerializer):
         read_only_fields = ['usage_count'] 
 
 
+class MessTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MessType
+        fields = ['id', 'name']
+
 class MenuItemSerializer(serializers.ModelSerializer):
+    dish = DishSerializer(read_only=True)
+    dish_id = serializers.PrimaryKeyRelatedField(
+        queryset=Dish.objects.all(), write_only=True, source='dish'
+    )
+
     class Meta:
         model = MenuItem
-        fields = '__all__'
+        fields = ['id', 'menu', 'dish', 'dish_id', 'meal_type']
 
 class MenuSerializer(serializers.ModelSerializer):
     menu_items = MenuItemSerializer(many=True, read_only=True)
-    
+
     class Meta:
         model = Menu
-        fields = '__all__'
+        fields = ['id', 'name', 'day_of_week','sub_total', 'is_custom', 'mess_type', 'created_by', 'menu_items']
 
-
-# updated
 class MessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mess
-        fields = '__all__'
-
+        fields = ['id', 'customer_name', 'mobile_number', 'start_date', 'end_date', 'mess_type', 'payment_method', 'total_amount', 'paid_amount', 'pending_amount', 'menus']

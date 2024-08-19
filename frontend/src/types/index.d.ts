@@ -225,6 +225,23 @@ export interface TableColumn<T> {
   header: string;
   render?: (value: T[keyof T], item: T) => React.ReactNode;
 }
+export interface MenuItem {
+  id: number;
+  dish: Dish;
+  meal_type: string;
+}
+
+export interface Menu {
+  id: number;
+  name: string;
+  sub_total: number;
+  menu_items: MenuItem[];
+}
+
+export interface MessType {
+  id: number;
+  name: string;
+}
 
 // Add FloorName type and initialFloors array
 export type FloorName = "Ground floor" | "1st Floor" | "2nd floor" | "3rd floor";

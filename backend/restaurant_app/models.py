@@ -200,6 +200,20 @@ class Coupon(models.Model):
         return amount
 
 
+
+class MessType(models.Model):
+    MESS_TYPE_CHOICES = [
+        ('combo', 'Combo'),
+        ('breakfast_lunch', 'Breakfast and Lunch'),
+        ('breakfast_dinner', 'Breakfast and Dinner'),
+        ('lunch_dinner', 'Lunch and Dinner')
+    ]
+
+    name = models.CharField(max_length=50, choices=MESS_TYPE_CHOICES, unique=True)
+
+    def __str__(self):
+        return self.get_name_display()
+
 class Menu(models.Model):
     DAY_OF_WEEK_CHOICES = [
         ('monday', 'Monday'),
@@ -211,54 +225,74 @@ class Menu(models.Model):
         ('sunday', 'Sunday')
     ]
     
+    name = models.CharField(max_length=255)
+    day_of_week = models.CharField(max_length=9, choices=DAY_OF_WEEK_CHOICES, blank=True, null=True)
+    sub_total = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    is_custom = models.BooleanField(default=False)  # False for predefined, True for custom
+    mess_type = models.ForeignKey('MessType', related_name='menus', on_delete=models.CASCADE, null=True, blank=True)
+    created_by = models.CharField(max_length=255, default='admin', null=True, blank=True)  # UUID for users, 'admin' for shop-created menus
+
+    def __str__(self):
+        return self.name
+
+    def calculate_sub_total(self):
+        menu_items = self.menu_items.all()
+        total = sum(item.dish.price for item in menu_items) if menu_items else 0
+        self.sub_total = total
+        self.save()
+
+class MenuItem(models.Model):
     MEAL_TYPE_CHOICES = [
         ('breakfast', 'Breakfast'),
         ('lunch', 'Lunch'),
         ('dinner', 'Dinner')
     ]
-
-    name = models.CharField(max_length=255)
-    day_of_week = models.CharField(max_length=9, choices=DAY_OF_WEEK_CHOICES, blank=True, null=True)
+    
     meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES, blank=True, null=True)
-    total_price = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
-    is_custom = models.BooleanField(default=False)  # False for predefined, True for custom
-
-    def __str__(self):
-        return self.name
-
-
-class MenuItem(models.Model):
     menu = models.ForeignKey(Menu, related_name='menu_items', on_delete=models.CASCADE)
-    dish = models.ForeignKey(Dish, on_delete=models.CASCADE)
+    dish = models.ForeignKey('Dish', on_delete=models.CASCADE)
     
     def __str__(self):
-        return f"{self.quantity} x {self.dish.name}"
+        return f"{self.dish.name}"
 
+# Signal handler to update Menu's sub_total
+@receiver(post_save, sender=MenuItem)
+def update_menu_sub_total(sender, instance, **kwargs):
+    menu = instance.menu
+    menu.calculate_sub_total()
 class Mess(models.Model):
-    MESS_TYPE_CHOICES = [
-        ('combo', 'Combo'),
-        ('breakfast_lunch', 'Breakfast and Lunch'),
-        ('breakfast_dinner', 'Breakfast and Dinner'),
-        ('lunch_dinner', 'Lunch and Dinner')
+
+    PAYMENT_METHOD_CHOICES = [
+        ("cash", "Cash"),
+        ("bank", "Bank"),
+        ("cash-bank","Cash and Bank")
     ]
-    customer_name = models.CharField(max_length=50,unique=True)
+    customer_name = models.CharField(max_length=50, unique=True)
     mobile_number = models.CharField(max_length=15, blank=True)
-    menu = models.ForeignKey(Menu, on_delete=models.CASCADE)
     start_date = models.DateField()
     end_date = models.DateField()
-    mess_type = models.CharField(max_length=20, choices=MESS_TYPE_CHOICES)
+    mess_type = models.ForeignKey(MessType, related_name='messes', on_delete=models.CASCADE)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='cash')
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    pending_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    menus = models.ManyToManyField(Menu, related_name='messes')
 
     def __str__(self):
-        return f"{self.customer.user.username}'s Mess Selection"
+        return f"{self.customer_name}'s Mess Selection"
+
+    def calculate_total_amount(self):
+        total = sum(menu.sub_total for menu in self.menus.all())
+        self.total_amount = total
 
     def is_valid(self):
         """
         Check if the Mess is currently valid based on the start and expire dates.
         """
-        today = date.today()
-        if self.start_date and self.expire_date:
-            return self.start_date <= today <= self.expire_date
-        return True  
+        today = timezone.now().date()
+        if self.start_date and self.end_date:
+            return self.start_date <= today <= self.end_date
+        return True
 
     class Meta:
-        unique_together = ('menu', 'mess_type') 
+        unique_together = ('mess_type', 'customer_name')

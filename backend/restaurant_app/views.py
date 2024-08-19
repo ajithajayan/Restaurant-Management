@@ -306,11 +306,41 @@ class CouponViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
+
+class MessTypeViewSet(viewsets.ModelViewSet):
+    queryset = MessType.objects.all()
+    serializer_class = MessTypeSerializer
+
 
 class MenuViewSet(viewsets.ModelViewSet):
     queryset = Menu.objects.all()
     serializer_class = MenuSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['mess_type', 'is_custom', 'created_by']  
+    search_fields = ['name', 'created_by']  
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        mess_type = self.request.query_params.get('mess_type')
+        is_custom = self.request.query_params.get('is_custom')
+        created_by = self.request.query_params.get('created_by')
+
+        if mess_type:
+            try:
+                mess_type = int(mess_type)
+                queryset = queryset.filter(mess_type=mess_type)
+            except ValueError:
+                raise ValueError("mess_type should be a number")
+
+        if is_custom is not None:
+            is_custom_bool = is_custom.lower() == 'true'
+            queryset = queryset.filter(is_custom=is_custom_bool)
+
+        if created_by:
+            queryset = queryset.filter(created_by=created_by)
+
+        return queryset
 
 class MenuItemViewSet(viewsets.ModelViewSet):
     queryset = MenuItem.objects.all()
@@ -318,4 +348,15 @@ class MenuItemViewSet(viewsets.ModelViewSet):
 
 class MessViewSet(viewsets.ModelViewSet):
     queryset = Mess.objects.all()
-    serializer_class = MessSerializer   
+    serializer_class = MessSerializer
+
+    def create(self, request, *args, **kwargs):
+        # Ensure no `id` is included in the creation data
+        data = request.data.copy()
+        data.pop('id', None)  # Remove `id` if present
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)

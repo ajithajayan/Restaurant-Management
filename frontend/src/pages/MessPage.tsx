@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Layout from "../components/Layout/Layout";
 import MessMembers from "../components/Mess/MessMembers";
 import Menus from "../components/Mess/Menus";
+import AddMembers from "@/components/Mess/AddMembers";
 
 const MessPage: React.FC = () => {
   const [activeButton, setActiveButton] = useState("Menus");
@@ -14,8 +15,8 @@ const MessPage: React.FC = () => {
     switch (activeButton) {
       case "Menus":
         return <Menus />;
-      case "Custom Menus":
-        return <div>Custom Menus Content</div>;
+      case "Add Members":
+        return <AddMembers />;
       case "Mess Members":
         return <MessMembers />;
       default:
@@ -40,9 +41,9 @@ const MessPage: React.FC = () => {
               className={`py-2 px-4 rounded ${
                 activeButton === "Custom Menus" ? "bg-blue-700 text-white" : "bg-blue-500 text-white hover:bg-blue-700"
               }`}
-              onClick={() => handleButtonClick("Custom Menus")}
+              onClick={() => handleButtonClick("Add Members")}
             >
-              Custom Menus
+              Add Members
             </button>
             <button
               className={`py-2 px-4 rounded ${
