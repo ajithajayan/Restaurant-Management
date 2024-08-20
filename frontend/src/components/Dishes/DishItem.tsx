@@ -9,7 +9,7 @@ const DishItem: React.FC<DishItemProps> = ({ dish, onAddDish }) => {
       <h3 className="text-xl font-semibold mb-2">{dish.name}</h3>
       <p className="text-gray-600 mb-2">{dish.description}</p>
       <div className="flex justify-between items-center mt-2">
-        <span className='text-lg font-bold'>QR{dish.price}</span>
+        <span className='text-lg font-bold'>QAR {dish.price}</span>
         <button onClick={() => onAddDish(dish)} className="bg-red-500 text-white rounded-full p-1">
           <Plus size={24} />
         </button>

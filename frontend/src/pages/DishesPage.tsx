@@ -8,11 +8,12 @@ import { Dish, Category, OrderFormData } from "../types";
 import { fetchUnreadCount, getCategories } from "../services/api";
 import { useQuery } from "react-query";
 import { CircleCheckBig } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 type OrderType = "dining" | "takeaway" | "delivery";
-type PaymentMethod = "cash" | "upi" | "card";
+type PaymentMethod = "cash" |  "bank";
 
 const DishesPage: React.FC = () => {
+  const navigate = useNavigate()
   const { dishes, isLoading, isError, addDishToOrder } = useDishes();
   const { createOrder } = useOrders();
   const { data: categories } = useQuery("categories", getCategories);
@@ -84,6 +85,7 @@ const DishesPage: React.FC = () => {
   const handleCloseBtnClick = () => {
     fetchUnreadCount();
     setShowSuccessModal(false);
+    navigate('/orders')
   };
 
   const handleCategoryClick = (categoryId: number | null) => {
@@ -109,8 +111,9 @@ const DishesPage: React.FC = () => {
   const subtotal = orderItems
     .filter((item) => typeof item.dish !== "number")
     .reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const gst = subtotal * 0.1;
-  const total = subtotal + gst;
+  // const gst = subtotal * 0.1;
+  // const total = subtotal + gst;
+  const total = subtotal;
 
   return (
     <Layout>
@@ -196,15 +199,15 @@ const DishesPage: React.FC = () => {
               <div className="mt-8">
                 <div className="flex justify-between mb-2">
                   <span>Subtotal</span>
-                  <span>QR{subtotal.toFixed(2)}</span>
+                  <span>QAR {subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between mb-2">
+                {/* <div className="flex justify-between mb-2">
                   <span>GST (10%)</span>
                   <span>QR{gst.toFixed(2)}</span>
-                </div>
+                </div> */}
                 <div className="flex justify-between font-bold">
                   <span>Total</span>
-                  <span>QR{total.toFixed(2)}</span>
+                  <span>QAR {total.toFixed(2)}</span>
                 </div>
               </div>
               <div className="mt-8">
@@ -233,8 +236,8 @@ const DishesPage: React.FC = () => {
                   className="w-full border border-gray-300 rounded-lg p-2"
                 >
                   <option value="cash">Cash</option>
-                  <option value="upi">UPI</option>
-                  <option value="card">Card</option>
+                  {/* <option value="upi">UPI</option> */}
+                  <option value="card">Bank</option>
                 </select>
               </div>
               <button

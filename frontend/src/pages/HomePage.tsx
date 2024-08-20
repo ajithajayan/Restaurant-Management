@@ -4,6 +4,7 @@ import Card from '../components/Home/HomeCard';
 import CardDetails from '../components/Home/CardDetails';
 
 const HomePage: React.FC = () => {
+
   const [selectedCard, setSelectedCard] = useState<{
     id: number;
     title: string;
@@ -19,10 +20,12 @@ const HomePage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="grid grid-cols-12 gap-4 p-4 bg-[#52088E] h-full">
-        <div className="col-span-2 space-y-12 flex flex-col items-center">
+      <div className="grid grid-cols-12 gap-4 p-4 bg-[#8D4CF957] h-full">
+        <div className="col-span-2 space-y-12 flex flex-col items-center ">
           {cards.map((card) => (
+          <div className='hover:bg-black '>
             <Card key={card.id} card={card} onClick={() => setSelectedCard(card)} />
+            </div>
           ))}
         </div>
         <div className="col-span-10">

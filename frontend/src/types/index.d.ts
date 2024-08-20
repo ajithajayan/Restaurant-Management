@@ -65,7 +65,7 @@ export interface OrderFormData {
   total_amount: number;
   status: "pending" | "approved" | "cancelled" | "delivered";
   order_type: "dining" | "takeaway" | "delivery"; 
-  payment_method: "cash" | "upi" | "card"; 
+  payment_method: "cash" | "bank"; 
 }
 
 
