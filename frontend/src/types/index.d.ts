@@ -156,6 +156,8 @@ export interface UseDishesReturn {
   isError: boolean;
   refetch: () => void;
   addDishToOrder: (id: number, quantity: number) => void;
+  page: number; 
+  setPage: (page: number) => void; 
 }
 
 export interface UseOrdersReturn {

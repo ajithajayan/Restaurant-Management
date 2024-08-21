@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout/Layout";
 import PaginationControls from "../components/Layout/PaginationControls";
-
-interface OrderItem {
-  dish: number;
-  quantity: number;
-}
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css"; // Import the styles
 
 interface SalesReport {
   id: number;
@@ -34,6 +31,8 @@ const SalesReportPage: React.FC = () => {
   const [reports, setReports] = useState<SalesReport[]>([]);
   const [messReports, setMessReports] = useState<MessReport[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [fromDate, setFromDate] = useState<Date | null>(null);
+  const [toDate, setToDate] = useState<Date | null>(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -42,20 +41,26 @@ const SalesReportPage: React.FC = () => {
     } else {
       fetchMessReports();
     }
-  }, [reportType]);
+  }, [reportType, fromDate, toDate]);
 
   const fetchSalesReports = async () => {
     try {
+      const url = new URL("http://127.0.0.1:8000/api/orders/");
       const token = localStorage.getItem("token");
-      const response = await fetch("http://127.0.0.1:8000/api/orders/",{
+
+      if (fromDate) url.searchParams.append("from_date", fromDate.toISOString().split("T")[0]);
+      if (toDate) url.searchParams.append("to_date", toDate.toISOString().split("T")[0]);
+
+      const response = await fetch(url.toString(), {
         headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
+
       if (response.ok) {
         const data = await response.json();
-        setReports(data.results); // Set the results array directly
+        setReports(data.results);
         setCurrentPage(1);
       } else {
         console.error("HTTP error! status:", response.status);
@@ -67,10 +72,16 @@ const SalesReportPage: React.FC = () => {
 
   const fetchMessReports = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/messes/");
+      const url = new URL("http://127.0.0.1:8000/api/messes/");
+
+      if (fromDate) url.searchParams.append("from_date", fromDate.toISOString().split("T")[0]);
+      if (toDate) url.searchParams.append("to_date", toDate.toISOString().split("T")[0]);
+
+      const response = await fetch(url.toString());
+
       if (response.ok) {
         const data = await response.json();
-        setMessReports(data.results); // Set the results array directly
+        setMessReports(data.results);
         setCurrentPage(1);
       } else {
         console.error("HTTP error! status:", response.status);
@@ -91,25 +102,50 @@ const SalesReportPage: React.FC = () => {
   return (
     <Layout>
       <div className="p-4">
-        <div className="flex space-x-4 mb-4">
-          <button
-            onClick={() => setReportType("sales")}
-            className={`p-4 rounded-lg shadow-md cursor-pointer ${
-              reportType === "sales" ? "bg-purple-500 text-white" : "bg-gray-200"
-            }`}
-          >
-            Sales Report
-          </button>
-          <button
-            onClick={() => setReportType("mess")}
-            className={`p-4 rounded-lg shadow-md cursor-pointer ${
-              reportType === "mess" ? "bg-purple-500 text-white" : "bg-gray-200"
-            }`}
-          >
-            Mess Report
-          </button>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setReportType("sales")}
+              className={`p-4 rounded-lg shadow-md cursor-pointer ${
+                reportType === "sales" ? "bg-purple-500 text-white" : "bg-gray-200"
+              }`}
+            >
+              Sales Report
+            </button>
+            <button
+              onClick={() => setReportType("mess")}
+              className={`p-4 rounded-lg shadow-md cursor-pointer ${
+                reportType === "mess" ? "bg-purple-500 text-white" : "bg-gray-200"
+              }`}
+            >
+              Mess Report
+            </button>
+          </div>
+
+          {/* Date Pickers - Positioned on the right side */}
+          <div className="flex space-x-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">From Date</label>
+              <DatePicker
+                selected={fromDate}
+                onChange={(date) => setFromDate(date)}
+                dateFormat="yyyy-MM-dd"
+                className="mt-1 p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">To Date</label>
+              <DatePicker
+                selected={toDate}
+                onChange={(date) => setToDate(date)}
+                dateFormat="yyyy-MM-dd"
+                className="mt-1 p-2 border rounded"
+              />
+            </div>
+          </div>
         </div>
 
+        {/* Report Table */}
         <div className="bg-white p-4 rounded-lg shadow-md">
           {reportType === "sales" ? (
             <table className="min-w-full divide-y divide-gray-200">
@@ -166,7 +202,6 @@ const SalesReportPage: React.FC = () => {
               </tbody>
             </table>
           )}
-
           <PaginationControls
             currentPage={currentPage}
             totalPages={Math.ceil((reportType === "sales" ? reports.length : messReports.length) / itemsPerPage)}

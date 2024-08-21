@@ -36,8 +36,11 @@ export const getCategories = () =>
   api
     .get<ApiResponse<Category>>("http://127.0.0.1:8000/api/categories/")
     .then((response) => response.data.results);
-export const getDishes = () =>
-  api.get<ApiResponse<Dish>>("http://127.0.0.1:8000/api/dishes/").then((response) => response.data);
+export const getDishes = (page: number = 1, pageSize: number = 10) =>
+      api
+        .get<ApiResponse<Dish>>(`http://127.0.0.1:8000/api/dishes/?page=${page}&page_size=${pageSize}`)
+        .then((response) => response.data);
+    
 export const fetchDish = async (dishId: number) => {
   const response = await api.get(`http://127.0.0.1:8000/api/dishes/${dishId}/`);
   return response.data;

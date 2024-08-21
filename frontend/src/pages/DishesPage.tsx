@@ -14,7 +14,7 @@ type PaymentMethod = "cash" |  "bank";
 
 const DishesPage: React.FC = () => {
   const navigate = useNavigate()
-  const { dishes, isLoading, isError, addDishToOrder } = useDishes();
+  const { dishes, isLoading, isError, addDishToOrder, page, setPage } = useDishes();
   const { createOrder } = useOrders();
   const { data: categories } = useQuery("categories", getCategories);
 
@@ -105,6 +105,10 @@ const DishesPage: React.FC = () => {
     return categoryMatch && searchMatch;
   });
 
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error loading dishes</div>;
 
@@ -176,6 +180,25 @@ const DishesPage: React.FC = () => {
             ))}
           </div>
           <DishList dishes={filteredDishes} onAddDish={handleAddDish} />
+      {/* Pagination Controls */}
+      <div className="flex justify-center mt-4">
+        <button
+          onClick={() => handlePageChange(page - 1)}
+          disabled={page === 1}
+          className="px-4 py-2 bg-blue-500 text-white rounded-l-lg"
+        >
+          Previous
+        </button>
+        <span className="px-4 py-2 bg-gray-200">{page}</span>
+        <button
+          onClick={() => handlePageChange(page + 1)}
+          disabled={!dishes?.next} // Disable if there's no next page
+          className="px-4 py-2 bg-blue-500 text-white rounded-r-lg"
+        >
+          Next
+        </button>
+      </div>
+
         </div>
         {orderItems.length > 0 && (
           <div
