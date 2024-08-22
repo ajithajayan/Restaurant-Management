@@ -29,8 +29,8 @@ const MenuCards: React.FC<MenuCardsProps> = ({ menus, totalAmount }) => {
         Menu Cards
       </h3>
       <div className="relative mt-4">
-        <div className="absolute top-0 right-0 p-2 bg-gray-200 text-gray-700 font-semibold">
-          Total Amount: QR{totalAmount.toFixed(2)} {/* Display the total amount */}
+      <div className="mb-4 p-2 bg-gray-200 text-gray-700 font-semibold text-right">
+      Total Amount: QR{totalAmount.toFixed(2)} {/* Display the total amount */}
         </div>
       </div>
       <div className="grid grid-cols-1 gap-4">
