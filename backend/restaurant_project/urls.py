@@ -22,7 +22,8 @@ from restaurant_app.views import (
     MenuViewSet,
     MenuItemViewSet,
     MessViewSet,
-    MessTypeViewSet
+    MessTypeViewSet,
+    SearchDishesAPIView  # Import the SearchDishesAPIView here
 )
 
 router = DefaultRouter()
@@ -48,4 +49,5 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/logout/', LogoutView.as_view({'post': 'logout'}), name='logout'),
+    path('api/search-dishes/', SearchDishesAPIView.as_view(), name='search_dishes'),  # Include the search API endpoint
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

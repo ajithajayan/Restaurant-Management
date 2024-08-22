@@ -5,7 +5,9 @@ import { useUpdateOrderStatus } from "../../hooks/useUpdateOrderStatus";
 import KitchenPrint from "./KitchenPrint";
 import SalesPrint from "./SalesPrint";
 import { useReactToPrint } from "react-to-print";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useLocation } from "react-router-dom";
+import AddProductModal from "./AddProductModal";
+import { api } from "../../services/api"; // Import your API service
 
 interface OrderCardProps {
   order: Order;
@@ -13,22 +15,27 @@ interface OrderCardProps {
 }
 
 const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
+  const location = useLocation();
   const [status, setStatus] = useState(order.status);
   const { updateOrderStatus, isLoading: isUpdating } = useUpdateOrderStatus();
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(location.search.includes("showKitchenBill=true"));
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [billType, setBillType] = useState<"kitchen" | "sales">("sales");
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
-  const navigate = useNavigate(); // Use useNavigate for navigation
+
+  const newlyAddedItems = location.search.includes("showKitchenBill=true")
+    ? order.items.filter((item) => item.is_new)
+    : order.items;
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newStatus = e.target.value as Order['status'];
+    const newStatus = e.target.value as Order["status"];
     setStatus(newStatus);
 
     if (newStatus === "approved") {
       setBillType("kitchen");
       setShowModal(true);
-    } else if (newStatus === "delivered") { // For "Order Success"
+    } else if (newStatus === "delivered") {
       setBillType("sales");
       setShowModal(true);
     } else {
@@ -36,8 +43,27 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
     }
   };
 
-  const handleBillTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setBillType(e.target.value as "kitchen" | "sales");
+  const handleAddProductSubmit = async (products: { dish: Dish; quantity: number }[]) => {
+    // Assuming the backend API endpoint for updating the order is something like `/api/orders/<order_id>/`
+    try {
+      const response = await api.put(`/api/orders/${order.id}/`, {
+        items: products.map(product => ({
+          dish: product.dish.id,
+          quantity: product.quantity,
+        })),
+      });
+
+      // Handle response, update local state if necessary
+      if (response.status === 200) {
+        setShowAddProductModal(false);
+        // Optionally, trigger the kitchen print if the order is approved for the kitchen
+        if (status === "approved") {
+          handlePrint();
+        }
+      }
+    } catch (error) {
+      console.error("Failed to add products to the order:", error);
+    }
   };
 
   const handlePrint = useReactToPrint({
@@ -47,12 +73,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   const handleGenerate = () => {
     handlePrint();
     setShowModal(false);
-    updateOrderStatus({ orderId: order.id, status }); // Optionally update status after bill generation
-  };
-
-  const handleAddItems = () => {
-    // Redirect to the product listing page, passing the current order ID
-    navigate(`/products/add?orderId=${order.id}`);
+    updateOrderStatus({ orderId: order.id, status });
   };
 
   return (
@@ -71,26 +92,40 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             <option value="cancelled">Cancelled</option>
             <option value="delivered">Order Success</option>
           </select>
+          <button
+            onClick={() => setShowAddProductModal(true)}
+            className="bg-blue-500 text-white px-3 py-1 rounded flex items-center"
+          >
+            <svg
+              className="w-5 h-5 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 4v16m8-8H4"
+              ></path>
+            </svg>
+            Add Product
+          </button>
         </div>
       </div>
       <p className="text-sm text-gray-600 mb-4">
         Ordered on: {new Date(order.created_at).toLocaleString()}
       </p>
       <div className="space-y-2">
-        {order.items.map((item, index) => (
+        {newlyAddedItems.map((item, index) => (
           <OrderItems key={index} orderItem={item} dishes={dishes} />
         ))}
       </div>
-      <div className="mt-4 flex justify-between items-center">
+      <div className="mt-4 flex justify-end items-center">
         <span className="text-lg font-semibold">
           Total: QAR {order.total_amount}
         </span>
-        <button
-          onClick={handleAddItems}
-          className="bg-blue-500 text-white px-3 py-1 rounded flex items-center"
-        >
-          + Add Items
-        </button>
       </div>
 
       {showModal && (
@@ -102,7 +137,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             {status === "delivered" && (
               <select
                 value={billType}
-                onChange={handleBillTypeChange}
+                onChange={(e) => setBillType(e.target.value as "kitchen" | "sales")}
                 className="border rounded px-2 py-2 w-full mb-4"
               >
                 <option value="sales">Sales Bill</option>
@@ -128,9 +163,16 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
         </div>
       )}
 
+      {showAddProductModal && (
+        <AddProductModal
+          onClose={() => setShowAddProductModal(false)}
+          onSubmit={handleAddProductSubmit}
+        />
+      )}
+
       <div className="hidden">
         <div ref={kitchenPrintRef}>
-          <KitchenPrint order={order} dishes={dishes} />
+          <KitchenPrint order={{ ...order, items: newlyAddedItems }} dishes={dishes} />
         </div>
         <div ref={salesPrintRef}>
           <SalesPrint order={order} dishes={dishes} />

@@ -15,7 +15,7 @@ from restaurant_app.models import *
 from restaurant_app.serializers import *
 from django.utils.dateparse import parse_date # Add on 21-08-2024
 from django.db.models import Q
-
+from rest_framework.views import APIView
 
 User = get_user_model()
 
@@ -86,6 +86,26 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(order_type=order_type)
         return queryset
 
+
+    def update(self, request, *args, **kwargs):
+        """Update an order with new items."""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        data = request.data
+
+        # Handle items separately
+        items_data = data.pop('items', [])
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        # Update or create OrderItems
+        for item_data in items_data:
+            dish_id = item_data.get('dish')
+            quantity = item_data.get('quantity', 1)
+            OrderItem.objects.update_or_create(order=instance, dish_id=dish_id, defaults={'quantity': quantity})
+
+        return Response(serializer.data)
    
     def get_queryset_by_time_range(self, time_range):
         end_date = timezone.now()
@@ -427,3 +447,16 @@ class MessViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+
+
+
+class SearchDishesAPIView(APIView):
+    def get(self, request):
+        query = request.GET.get('search', '')
+        if query:
+            dishes = Dish.objects.filter(name__icontains=query)
+            serializer = DishSerializer(dishes, many=True)
+            return Response({'results': serializer.data}, status=status.HTTP_200_OK)
+        return Response({'results': []}, status=status.HTTP_200_OK)

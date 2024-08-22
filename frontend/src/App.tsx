@@ -20,6 +20,7 @@ const CouponPage = lazy(() => import("./pages/CouponPage"));
 const HomePage = lazy(() => import("./pages/HomePage"));
 const MessPage = lazy(() => import("./pages/MessPage"));
 const SalesReportPage = lazy(() => import("./pages/SalesReportPage"));
+// const AddProductPage = lazy(() => import("./pages/AddProductPage")); 
 function App() {
   return (
     <ErrorBoundary>
@@ -40,6 +41,7 @@ function App() {
               <Route path="/mess" element={<ProtectedRoute><MessPage /></ProtectedRoute>} />
               <Route path="/salesreport" element={<ProtectedRoute><SalesReportPage /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+              {/* <Route path="/add-products" element={<ProtectedRoute><AddProductPage /></ProtectedRoute>} /> Add the new AddProductPage route */}
               <Route path="*" element={<NotFound404 />} />
             </Routes>
           </Suspense>

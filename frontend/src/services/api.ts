@@ -120,3 +120,9 @@ export const fetchDashboardData = async (
 
   return { ...dashboardData, ...trendsData };
 };
+
+
+export const updateOrderStatusAPI = async (orderId: number, status: string) => {
+  const response = await api.patch(`/orders/${orderId}/`, { status });
+  return response.data;
+};
