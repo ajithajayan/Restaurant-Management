@@ -66,8 +66,9 @@ class Order(models.Model):
 
     PAYMENT_METHOD_CHOICES = [
         ("cash", "Cash"),
-        ("upi", "UPI"),
-        ("card", "Card"),
+        ("bank", "Bank"),
+        ("cash-bank","Cash and Bank")
+
     ]
 
     customer = models.ForeignKey(Customer, related_name='orders', on_delete=models.CASCADE)
@@ -77,12 +78,23 @@ class Order(models.Model):
     bill_generated = models.BooleanField(default=False)
     order_type = models.CharField(max_length=20, choices=ORDER_TYPE_CHOICES, default='dining')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='cash')
+    cash_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) # Add cahs_amount field on 21-08-2024
+    bank_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) # Add bank_amount field on 21-08-2024
+    invoice_number = models.CharField(max_length=20, blank=True)  # New invoice_number field on 21-08-2024
+
 
     class Meta:
         ordering = ('-created_at',)
 
     def __str__(self):
         return f"{self.id} - {self.created_at} - {self.order_type}"
+    
+    def save(self, *args, **kwargs): # Add on 21-08-2024
+        super().save(*args, **kwargs)  
+
+        if not self.invoice_number:
+            self.invoice_number = f'{self.id:04d}'  # Generates an invoice number with leading zeros
+            self.save(update_fields=['invoice_number'])  
 
 
 class OrderItem(models.Model):
@@ -203,7 +215,7 @@ class Coupon(models.Model):
 
 class MessType(models.Model):
     MESS_TYPE_CHOICES = [
-        ('combo', 'Combo'),
+        ('breakfast_lunch_dinner', 'Breakfast and Lunch and Dinner'),
         ('breakfast_lunch', 'Breakfast and Lunch'),
         ('breakfast_dinner', 'Breakfast and Dinner'),
         ('lunch_dinner', 'Lunch and Dinner')
@@ -277,7 +289,9 @@ class Mess(models.Model):
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     pending_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     menus = models.ManyToManyField(Menu, related_name='messes')
-
+    cash_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) # Add cahs_amount field on 21-08-2024
+    bank_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) # Add bank_amount field on 21-08-2024
+    
     def __str__(self):
         return f"{self.customer_name}'s Mess Selection"
 
