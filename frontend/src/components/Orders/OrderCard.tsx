@@ -5,6 +5,7 @@ import { useUpdateOrderStatus } from "../../hooks/useUpdateOrderStatus";
 import KitchenPrint from "./KitchenPrint";
 import SalesPrint from "./SalesPrint";
 import { useReactToPrint } from "react-to-print";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 interface OrderCardProps {
   order: Order;
@@ -18,6 +19,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   const [billType, setBillType] = useState<"kitchen" | "sales">("sales");
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
+  const navigate = useNavigate(); // Use useNavigate for navigation
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value as Order['status'];
@@ -48,6 +50,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
     updateOrderStatus({ orderId: order.id, status }); // Optionally update status after bill generation
   };
 
+  const handleAddItems = () => {
+    // Redirect to the product listing page, passing the current order ID
+    navigate(`/products/add?orderId=${order.id}`);
+  };
+
   return (
     <div key={order.id} className="bg-white p-6 rounded-lg shadow mb-6">
       <div className="flex justify-between items-center mb-4">
@@ -74,10 +81,16 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
           <OrderItems key={index} orderItem={item} dishes={dishes} />
         ))}
       </div>
-      <div className="mt-4 flex justify-end items-center">
+      <div className="mt-4 flex justify-between items-center">
         <span className="text-lg font-semibold">
           Total: QAR {order.total_amount}
         </span>
+        <button
+          onClick={handleAddItems}
+          className="bg-blue-500 text-white px-3 py-1 rounded flex items-center"
+        >
+          + Add Items
+        </button>
       </div>
 
       {showModal && (
