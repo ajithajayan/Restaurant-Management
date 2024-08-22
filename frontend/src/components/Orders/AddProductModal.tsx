@@ -23,7 +23,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
       if (productSearch.length > 1) {
         try {
           // Use the correct API endpoint here
-          const response = await api.get(`http://127.0.0.1:8000/api/search-dishes/?search=${productSearch}`);
+          const response = await api.get(`search-dishes/?search=${productSearch}`);
           if (response && response.data && response.data.results) {
             setSuggestions(response.data.results);
           } else {
