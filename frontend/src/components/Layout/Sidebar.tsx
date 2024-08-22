@@ -78,41 +78,43 @@ const Sidebar: React.FC = () => {
   );
 
   return (
-    <div className="w-20 md:w-72 bg-white p-4 h-screen border-r border-gray-300 flex flex-col overflow-y-auto custom-scrollbar">
+    <div className="w-20 md:w-72 bg-white p-4 h-screen border-r border-gray-300 flex flex-col">
       <Link to="/" className="mb-8 flex justify-center md:justify-start">
         <img src="/images/logo.png" alt="Logo" className="h-8 w-auto" />
       </Link>
-      <nav className="flex-grow">
-        <ul className="space-y-2">{menuItems.map(renderMenuItem)}</ul>
-      </nav>
-      <div className="mt-6">
-        <h3 className="text-md text-black-500 mb-2 hidden md:block font-bold">
-          Other
-        </h3>
-        <ul>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  to="/notifications"
-                  className={`flex items-center space-x-2 p-2 rounded ${isActive(
-                    "/notifications"
-                  )}`}
-                >
-                  <Bell className="w-6 h-6" />
-                  <span className="hidden md:inline font-bold">
-                    Notifications
-                  </span>
-                  <NotificationBadge className="ml-auto" />
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="md:hidden">
-                <p>Notifications</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <LogoutBtn />
-        </ul>
+      <div className="overflow-y-auto invisible-scrollbar">
+        <nav className="flex-grow mr-2">
+          <ul className="space-y-2">{menuItems.map(renderMenuItem)}</ul>
+        </nav>
+        <div className="mt-6">
+          <h3 className="text-md text-black-500 mb-2 hidden md:block font-bold">
+            Other
+          </h3>
+          <ul>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    to="/notifications"
+                    className={`flex items-center space-x-2 p-2 rounded ${isActive(
+                      "/notifications"
+                    )}`}
+                  >
+                    <Bell className="w-6 h-6" />
+                    <span className="hidden md:inline font-bold">
+                      Notifications
+                    </span>
+                    <NotificationBadge className="ml-auto" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="md:hidden">
+                  <p>Notifications</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <LogoutBtn />
+          </ul>
+        </div>
       </div>
       <a
         href="https://nasscript.com"

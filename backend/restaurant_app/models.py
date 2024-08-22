@@ -106,14 +106,12 @@ class Order(models.Model):
         max_length=20, choices=PAYMENT_METHOD_CHOICES, default="cash"
     )
     cash_amount = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00,
-    )  # Add cahs_amount field on 21-08-2024
-    bank_amount = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00
-    )  # Add bank_amount field on 21-08-2024
-    invoice_number = models.CharField(
-        max_length=20, blank=True
-    )  # New invoice_number field on 21-08-2024
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+    )
+    bank_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    invoice_number = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
     delivery_driver_id = models.IntegerField(null=True, blank=True)
 
@@ -359,9 +357,13 @@ class Mess(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     pending_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    menus = models.ManyToManyField(Menu, related_name='messes')
-    cash_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) # Add cahs_amount field on 21-08-2024
-    bank_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) # Add bank_amount field on 21-08-2024
+    menus = models.ManyToManyField(Menu, related_name="messes")
+    cash_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )  # Add cahs_amount field on 21-08-2024
+    bank_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )  # Add bank_amount field on 21-08-2024
 
     def __str__(self):
         return f"{self.customer_name}'s Mess Selection"

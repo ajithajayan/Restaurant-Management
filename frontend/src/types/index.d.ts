@@ -65,7 +65,9 @@ export interface OrderFormData {
   total_amount: number;
   status: "pending" | "approved" | "cancelled" | "delivered";
   order_type: "dining" | "takeaway" | "delivery";
-  payment_method: "cash" | "bank" | "cash_bank";
+  payment_method: "cash" | "bank" | "cash-bank";
+  bank_amount?: number;
+  cash_amount?: number;
   address: string;
   delivery_driver_id: number | null;
 }

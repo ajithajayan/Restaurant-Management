@@ -33,7 +33,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type OrderType = "dining" | "takeaway" | "delivery";
-type PaymentMethod = "cash" | "bank" | "cash_bank";
+type PaymentMethod = "cash" | "bank" | "cash-bank";
 
 const DishesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -55,6 +55,8 @@ const DishesPage: React.FC = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [orderType, setOrderType] = useState<OrderType>("dining");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
+  const [bankAmount, setBankAmount] = useState("");
+  const [cashAmount, setCashAmount] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDriver, setSelectedDriver] = useState<DeliveryDriver | null>(
     null
@@ -124,6 +126,8 @@ const DishesPage: React.FC = () => {
         status: "pending",
         order_type: orderType,
         payment_method: paymentMethod,
+        bank_amount: paymentMethod === "cash-bank" ? parseFloat(bankAmount) || 0 : undefined,
+        cash_amount: paymentMethod === "cash-bank" ? parseFloat(cashAmount) || 0 : undefined,
         address: orderType === "delivery" ? deliveryAddress : "",
         delivery_driver_id:
           orderType === "delivery" && selectedDriver ? selectedDriver.id : null,
@@ -258,7 +262,9 @@ const DishesPage: React.FC = () => {
         {orderItems.length > 0 && (
           <div
             className={` bg-white p-8 ${
-              isOrderVisible ? "flex justify-end lg:w-[550px]" : "hidden lg:block"
+              isOrderVisible
+                ? "flex justify-end lg:w-[550px]"
+                : "hidden lg:block"
             }`}
           >
             <div className="sticky top-0">
@@ -391,24 +397,39 @@ const DishesPage: React.FC = () => {
                       <Label htmlFor="bank">Bank</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="cash_bank" id="cash_bank" />
-                      <Label htmlFor="cash_bank">Cash & Bank</Label>
+                      <RadioGroupItem value="cash-bank" id="cash-bank" />
+                      <Label htmlFor="cash-bank">Cash & Bank</Label>
                     </div>
                   </RadioGroup>
                 </div>
 
-                {paymentMethod === "cash_bank" && (
+                {paymentMethod === "cash-bank" && (
                   <div className="flex flex-col gap-2">
                     <div className="flex w-full max-w-sm items-center gap-1.5">
                       <Label htmlFor="cash_value">Cash</Label>
-                      <Input type="text" id="cash_value" placeholder="Cash" className="focus:outline-none" />
+                      <Input
+                        type="text"
+                        id="cash_value"
+                        placeholder="Cash"
+                        className="focus:outline-none"
+                        value={cashAmount}
+                        onChange={(e) => setCashAmount(e.target.value)}
+                      />
                     </div>
                     <div className="flex w-full max-w-sm items-center gap-1.5">
                       <Label htmlFor="bank_value">Bank</Label>
-                      <Input type="text" id="bank_value" placeholder="Bank" />
+                      <Input
+                        type="text"
+                        id="bank_value"
+                        placeholder="Bank"
+                        className="focus:outline-none"
+                        value={bankAmount}
+                        onChange={(e) => setBankAmount(e.target.value)}
+                      />
                     </div>
-                    </div>
+                  </div>
                 )}
+
                 {error && (
                   <Alert variant="destructive" className="mt-4">
                     <AlertDescription>{error}</AlertDescription>
