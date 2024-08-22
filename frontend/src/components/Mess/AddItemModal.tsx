@@ -26,13 +26,14 @@ interface Menu {
 interface AddItemProps {
   menu: Menu;
   onClose: () => void;
-  onItemAdded: () => void; // Add this callback prop
+  onItemAdded: () => void;
 }
 
 const AddItemModal: React.FC<AddItemProps> = ({ menu, onClose, onItemAdded }) => {
   const [mealType, setMealType] = useState("");
   const [selectedDish, setSelectedDish] = useState<number | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
+  const [searchQuery, setSearchQuery] = useState(""); // Add state for search query
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -100,13 +101,17 @@ const AddItemModal: React.FC<AddItemProps> = ({ menu, onClose, onItemAdded }) =>
     try {
       const response = await axios.post("http://127.0.0.1:8000/api/menu-items/", data);
       console.log("Menu item added:", response.data);
-      onItemAdded(); // Call callback after adding item
+      onItemAdded();
       onClose();
     } catch (error) {
       console.error("Error adding menu item:", error);
       alert("An error occurred while adding the menu item.");
     }
   };
+
+  const filteredDishes = dishes.filter((dish) =>
+    dish.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur">
@@ -133,15 +138,23 @@ const AddItemModal: React.FC<AddItemProps> = ({ menu, onClose, onItemAdded }) =>
             <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="dish">
               Dish
             </label>
+            <input
+              type="text"
+              placeholder="Search dish"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="block w-full p-2 mb-2 border border-gray-300 rounded-md"
+            />
             <select
               id="dish"
               ref={selectRef}
               value={selectedDish || ""}
               onChange={(e) => setSelectedDish(Number(e.target.value))}
               className="block w-full p-2 border border-gray-300 rounded-md max-h-40 overflow-y-auto"
+              style={{ position: 'relative' }} // Add relative position
             >
               <option value="">Select dish</option>
-              {dishes.map((dish) => (
+              {filteredDishes.map((dish) => (
                 <option key={dish.id} value={dish.id}>
                   {dish.name}
                 </option>
