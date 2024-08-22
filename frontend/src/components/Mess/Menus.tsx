@@ -22,7 +22,7 @@ interface Menu {
 
 const Menus: React.FC = () => {
   const [menus, setMenus] = useState<Menu[]>([]);
-  const [filter, setFilter] = useState<number | null>(null);
+  const [filter, setFilter] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +50,7 @@ const Menus: React.FC = () => {
     fetchMenus();
   }, []);
 
-  const handleFilterChange = (messType: number | null) => {
+  const handleFilterChange = (messType: number) => {
     setFilter(messType);
     console.log("Selected filter:", messType);
   };
