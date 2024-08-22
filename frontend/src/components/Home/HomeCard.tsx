@@ -4,10 +4,10 @@ import { Truck, HandPlatter, ShoppingBag } from 'lucide-react';
 interface CardProps {
   card: { id: number; title: string; content: string; iconType: 'Delivery' | 'Takeaway' | 'Dining' };
   onClick: () => void;
+  isActive: boolean; // New prop to check if the card is active
 }
 
-const HomeCard: React.FC<CardProps> = ({ card, onClick }) => {
-  // Choose the icon based on the iconType prop
+const HomeCard: React.FC<CardProps> = ({ card, onClick, isActive }) => {
   const renderIcon = () => {
     switch (card.iconType) {
       case 'Delivery':
@@ -21,7 +21,6 @@ const HomeCard: React.FC<CardProps> = ({ card, onClick }) => {
     }
   };
 
-  // Choose the name based on the iconType prop
   const renderName = () => {
     switch (card.iconType) {
       case 'Delivery':
@@ -36,7 +35,12 @@ const HomeCard: React.FC<CardProps> = ({ card, onClick }) => {
   };
 
   return (
-    <div onClick={onClick} className="w-24 h-24 p-4 bg-gradient-to-r from-purple-500 to-pink-500 flex flex-col items-center justify-center cursor-pointer rounded-lg shadow-lg">
+    <div
+      onClick={onClick}
+      className={`w-24 h-24 p-4 ${
+        isActive ? 'bg-blue-500' : 'bg-gradient-to-r from-purple-500 to-pink-500'
+      } flex flex-col items-center justify-center cursor-pointer rounded-lg shadow-lg`}
+    >
       {renderIcon()}
       <p className="mt-2 text-white text-sm">{renderName()}</p>
     </div>
