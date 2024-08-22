@@ -44,7 +44,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'customer', 'created_at', 'total_amount', 'status', 'bill_generated', 'items','order_type','payment_method']
+        fields = ['id', 'customer', 'created_at', 'total_amount', 'status', 'bill_generated', 'bank_amount','cash_amount','invoice_number','items','order_type','payment_method']
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
@@ -123,6 +123,10 @@ class MenuSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'day_of_week','sub_total', 'is_custom', 'mess_type', 'created_by', 'menu_items']
 
 class MessSerializer(serializers.ModelSerializer):
+    mess_type = MessTypeSerializer(read_only=True) 
+    mess_type_id = serializers.PrimaryKeyRelatedField(
+        queryset=MessType.objects.all(), write_only=True, source='mess_type'
+    ) 
     class Meta:
         model = Mess
-        fields = ['id', 'customer_name', 'mobile_number', 'start_date', 'end_date', 'mess_type', 'payment_method', 'total_amount', 'paid_amount', 'pending_amount', 'menus']
+        fields = ['id', 'customer_name', 'mobile_number', 'start_date', 'end_date', 'mess_type','mess_type_id', 'payment_method','bank_amount','cash_amount','total_amount', 'paid_amount', 'pending_amount', 'menus']
