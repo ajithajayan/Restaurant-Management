@@ -106,7 +106,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             "id",
-            "customer",
+            "user",
             "created_at",
             "total_amount",
             "status",

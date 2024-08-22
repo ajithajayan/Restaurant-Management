@@ -30,3 +30,20 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #eee;
 }
+
+.invisible-scrollbar::-webkit-scrollbar {
+  width: 0px;
+}
+
+.invisible-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.invisible-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbc8c8;
+  border-radius: 4px;
+}
+
+.invisible-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #eee;
+}
