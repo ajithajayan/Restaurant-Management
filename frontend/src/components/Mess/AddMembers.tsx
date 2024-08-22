@@ -33,6 +33,8 @@ const AddMembers: React.FC = () => {
   const [endDate, setEndDate] = useState("");
   const [messType, setMessType] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [cashAmount, setCashAmount] = useState('');
+  const [bankAmount, setBankAmount] = useState('');
   const [menuType, setMenuType] = useState("own_menu");
   const [messTypes, setMessTypes] = useState<MessType[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
@@ -76,6 +78,14 @@ const AddMembers: React.FC = () => {
     setTotalAmount(total * selectedWeek);
   }, [menus, selectedWeek]);
 
+  useEffect(() => {
+    if (startDate && selectedWeek) {
+      const start = new Date(startDate);
+      start.setDate(start.getDate() + (selectedWeek * 7) - 1);
+      setEndDate(start.toISOString().split('T')[0]); // Format as YYYY-MM-DD
+    }
+  }, [startDate, selectedWeek]);
+
   const menuIds = menuType === "own_menu"
     ? menus.map(menu => menu.id)
     : menus.filter(menu => menu.created_by === mobileNumber).map(menu => menu.id);
@@ -96,8 +106,10 @@ const AddMembers: React.FC = () => {
       mobile_number: mobileNumber,
       start_date: startDate,
       end_date: endDate,
-      mess_type: messType,
+      mess_type_id: messType,
       payment_method: paymentMethod,
+      cash_amount: cashAmount !== null && cashAmount !== undefined && cashAmount !== '' ? cashAmount : "0.00",
+      bank_amount: bankAmount !== null && bankAmount !== undefined && bankAmount !== '' ? bankAmount : "0.00",
       menu_type: menuType,
       total_amount: totalAmount,
       paid_amount: parseFloat(paidAmount),
@@ -186,10 +198,27 @@ const AddMembers: React.FC = () => {
               id="endDate"
               type="date"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              min={today}
+              readOnly
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
+          </div>
+
+          <div className="flex-1 min-w-[200px]">
+            <label htmlFor="week" className="block text-sm font-medium text-gray-700">
+              Select Week
+            </label>
+            <select
+              id="week"
+              value={selectedWeek}
+              onChange={(e) => setSelectedWeek(Number(e.target.value))}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            >
+              {Array.from({ length: 4 }, (_, index) => (
+                <option key={index + 1} value={index + 1}>
+                  {index + 1}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex-1 min-w-[200px]">
@@ -210,21 +239,6 @@ const AddMembers: React.FC = () => {
                   {type.name}
                 </option>
               ))}
-            </select>
-          </div>
-
-          <div className="flex-1 min-w-[200px]">
-            <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700">
-              Payment Method
-            </label>
-            <select
-              id="paymentMethod"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            >
-              <option value="cash">Cash</option>
-              <option value="bank">Bank</option>
             </select>
           </div>
 
@@ -272,6 +286,82 @@ const AddMembers: React.FC = () => {
             />
           </div>
 
+
+          <div className="flex-1 min-w-[200px]">
+            <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700">
+              Payment Method
+            </label>
+            <select
+              id="paymentMethod"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            >
+              <option value="cash">Cash</option>
+              <option value="bank">Bank</option>
+              <option value="cash_and_bank">Cash and Bank</option>
+            </select>
+          </div>
+
+          {paymentMethod === 'cash' && (
+            <div className="flex-1 min-w-[200px]">
+              <label htmlFor="cashAmount" className="block text-sm font-medium text-gray-700">
+                Cash Amount
+              </label>
+              <input
+                type="number"
+                id="cashAmount"
+                value={cashAmount}
+                onChange={(e) => setCashAmount(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+          )}
+
+          {paymentMethod === 'bank' && (
+            <div className="flex-1 min-w-[200px]">
+              <label htmlFor="bankAmount" className="block text-sm font-medium text-gray-700">
+                Bank Amount
+              </label>
+              <input
+                type="number"
+                id="bankAmount"
+                value={bankAmount}
+                onChange={(e) => setBankAmount(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+          )}
+
+          {paymentMethod === 'cash_and_bank' && (
+            <div className="space-y-4">
+              <div className="flex-1 min-w-[200px]">
+                <label htmlFor="cashAmount" className="block text-sm font-medium text-gray-700">
+                  Cash Amount
+                </label>
+                <input
+                  type="number"
+                  id="cashAmount"
+                  value={cashAmount}
+                  onChange={(e) => setCashAmount(e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label htmlFor="bankAmount" className="block text-sm font-medium text-gray-700">
+                  Bank Amount
+                </label>
+                <input
+                  type="number"
+                  id="bankAmount"
+                  value={bankAmount}
+                  onChange={(e) => setBankAmount(e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Row 4 */}
           <div className="flex-1 min-w-[200px]">
             <label htmlFor="totalAmount" className="block text-sm font-medium text-gray-700">
@@ -285,27 +375,7 @@ const AddMembers: React.FC = () => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
           </div>
-
-          <div className="flex-1 min-w-[200px]">
-            <label htmlFor="week" className="block text-sm font-medium text-gray-700">
-              Select Week
-            </label>
-            <select
-              id="week"
-              value={selectedWeek}
-              onChange={(e) => setSelectedWeek(Number(e.target.value))}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            >
-              {Array.from({ length: 10 }, (_, index) => (
-                <option key={index + 1} value={index + 1}>
-                  {index + 1}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
-
-
 
         {/* Submit button */}
         <button
