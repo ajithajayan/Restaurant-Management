@@ -15,22 +15,27 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   const [status, setStatus] = useState(order.status);
   const { updateOrderStatus, isLoading: isUpdating } = useUpdateOrderStatus();
   const [showModal, setShowModal] = useState(false);
-  const [billType, setBillType] = useState("");
+  const [billType, setBillType] = useState<"kitchen" | "sales">("sales");
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value as Order['status'];
     setStatus(newStatus);
-    updateOrderStatus({ orderId: order.id, status: newStatus });
-  };
 
-  const handleGenerateBill = () => {
-    setShowModal(true);
+    if (newStatus === "approved") {
+      setBillType("kitchen");
+      setShowModal(true);
+    } else if (newStatus === "delivered") { // For "Order Success"
+      setBillType("sales");
+      setShowModal(true);
+    } else {
+      updateOrderStatus({ orderId: order.id, status: newStatus });
+    }
   };
 
   const handleBillTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setBillType(e.target.value);
+    setBillType(e.target.value as "kitchen" | "sales");
   };
 
   const handlePrint = useReactToPrint({
@@ -40,6 +45,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   const handleGenerate = () => {
     handlePrint();
     setShowModal(false);
+    updateOrderStatus({ orderId: order.id, status }); // Optionally update status after bill generation
   };
 
   return (
@@ -58,14 +64,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             <option value="cancelled">Cancelled</option>
             <option value="delivered">Order Success</option>
           </select>
-          {status === 'delivered' && !order.bill_generated && (
-            <button
-              onClick={handleGenerateBill}
-              className="bg-green-500 text-white px-3 py-1 rounded"
-            >
-              Generate Bill
-            </button>
-          )}
         </div>
       </div>
       <p className="text-sm text-gray-600 mb-4">
@@ -85,16 +83,19 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
       {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">Select Bill Type</h3>
-            <select
-              value={billType}
-              onChange={handleBillTypeChange}
-              className="border rounded px-2 py-2 w-full mb-4"
-            >
-              <option value="">Select bill type</option>
-              <option value="kitchen">Kitchen Bill</option>
-              <option value="sales">Sales Bill</option>
-            </select>
+            <h3 className="text-lg font-semibold mb-4">
+              {billType === "kitchen" ? "Kitchen Bill" : "Sales Bill"}
+            </h3>
+            {status === "delivered" && (
+              <select
+                value={billType}
+                onChange={handleBillTypeChange}
+                className="border rounded px-2 py-2 w-full mb-4"
+              >
+                <option value="sales">Sales Bill</option>
+                <option value="kitchen">Kitchen Bill</option>
+              </select>
+            )}
             <div className="flex justify-end">
               <button
                 onClick={() => setShowModal(false)}
