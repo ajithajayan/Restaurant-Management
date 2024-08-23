@@ -9,7 +9,7 @@ export const ProtectedRoute: React.FC<{
   const { user, token } = useSelector((state: any) => state.auth);
 
   if (!token) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login-passcode" replace />;
   }
 
   if (!allowedRoles.includes(user?.role)) {

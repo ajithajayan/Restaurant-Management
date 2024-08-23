@@ -26,7 +26,7 @@ const LogoutBtn: React.FC = () => {
       if (refreshToken) {
         await logoutAPI();
         dispatch(logout());
-        navigate("/login");
+        navigate("/login-passcode");
       }
     } catch (error) {
       console.error(`Failed to log out: ${error}`);
