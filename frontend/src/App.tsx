@@ -40,14 +40,6 @@ function App() {
             <Suspense fallback={<Loader />}>
               <Routes>
                 <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute allowedRoles={["staff", "admin"]}>
-                      <DashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
                   path="/login"
                   element={
                     <AuthenticatedRoute>
@@ -61,6 +53,14 @@ function App() {
                     <AuthenticatedRoute>
                       <PasscodeLoginPage />
                     </AuthenticatedRoute>
+                  }
+                />
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute allowedRoles={["staff", "admin"]}>
+                      <DashboardPage />
+                    </ProtectedRoute>
                   }
                 />
                 <Route

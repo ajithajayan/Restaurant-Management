@@ -69,12 +69,12 @@ const NotificationsPage: React.FC = () => {
                 key={notification.id}
                 className="shadow-lg border border-gray-200"
               >
-                <CardHeader className="w-full flex justify-between">
+                <CardHeader className="w-full flex relative justify-between">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDeleteNotification(notification.id)}
-                    className="absolute right-20 text-gray-400 hover:text-red-500"
+                    className="absolute right-10 text-gray-400 hover:text-red-500"
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -93,7 +93,7 @@ const NotificationsPage: React.FC = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => markAsRead(notification.id)}
-                      className="text-blue-600 hover:text-blue-800 border-blue-600 hover:border-blue-800"
+                      className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 border-blue-600 hover:border-blue-800"
                     >
                       Mark as read
                     </Button>

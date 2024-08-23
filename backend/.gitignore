@@ -9,6 +9,8 @@ venv/
 
 # Ignore media files
 /media/
+
+# Ignore migration files
 /migrations/
 
 # Ignore static files and test data

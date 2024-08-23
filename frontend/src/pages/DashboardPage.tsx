@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy } from "react";
 import {
   LineChart,
   Line,
@@ -38,9 +38,11 @@ import {
   Wallet,
 } from "lucide-react";
 import Loader from "@/components/Layout/Loader";
-import Layout from "@/components/Layout/Layout";
-import TopDishesSlider from "@/components/Dashboard/TopDishesSlider";
 import { formatHour } from "@/utils/formatters";
+const Layout = lazy(() => import("@/components/Layout/Layout"));
+const TopDishesSlider = lazy(
+  () => import("@/components/Dashboard/TopDishesSlider")
+);
 
 const COLORS = [
   "#0088FE",
@@ -65,7 +67,12 @@ const RestaurantDashboard: React.FC = () => {
     loadDashboardData();
   }, [timeRange]);
 
-  if (!dashboardData) return <Loader />;
+  if (!dashboardData)
+    return (
+      <Layout>
+        <Loader />
+      </Layout>
+    );
 
   const totalIncome = dashboardData.total_income ?? 0;
 
