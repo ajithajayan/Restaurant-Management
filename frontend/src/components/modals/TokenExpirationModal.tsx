@@ -21,7 +21,7 @@ const TokenExpirationModal = () => {
     try {
       await logoutAPI();
       dispatch(logout());
-      navigate("/login");
+      navigate("/login-passcode");
     } catch (error) {
       console.error(`Failed to log out: ${error}`);
     }
