@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import Swal from "sweetalert2";
 import { Order, Dish } from "../../types";
 import OrderItems from "./OrderItems";
 import { useUpdateOrderStatus } from "../../hooks/useUpdateOrderStatus";
@@ -18,15 +19,13 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   const location = useLocation();
   const [status, setStatus] = useState(order.status);
   const { updateOrderStatus, isLoading: isUpdating } = useUpdateOrderStatus();
-  const [showModal, setShowModal] = useState(
-    location.search.includes("showKitchenBill=true")
-  );
+  const [showModal, setShowModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [billType, setBillType] = useState<"kitchen" | "sales">("sales");
   const [paymentMethod, setPaymentMethod] = useState(order.payment_method || "cash");
-  const [cashAmount, setCashAmount] = useState(0);
-  const [bankAmount, setBankAmount] = useState(0);
+  const [cashAmount, setCashAmount] = useState(order.total_amount / 2);
+  const [bankAmount, setBankAmount] = useState(order.total_amount / 2);
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
 
@@ -36,7 +35,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
 
   const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value as Order["status"];
-    setStatus(newStatus);
 
     if (newStatus === "approved") {
       setBillType("kitchen");
@@ -45,10 +43,44 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
       setBillType("sales");
       setShowModal(true);
     } else if (newStatus === "order_without_bill") {
-      setBillType("kitchen");
-      await updateOrderStatus({ orderId: order.id, status: "delivered" });
-      handlePrint();
+      Swal.fire({
+        title: "Continue without Bill?",
+        text: "Do you want to continue without generating a bill?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, continue!",
+        cancelButtonText: "No, go back",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          setBillType("kitchen");
+          await updateOrderStatus({ orderId: order.id, status: "delivered" });
+          setStatus("delivered");
+          setShowAddProductModal(false);
+          handlePrint();
+          Swal.fire("Success!", "The kitchen bill has been printed.", "success");
+        }
+      });
+    } else if (newStatus === "cancelled") {
+      Swal.fire({
+        title: "Are you sure?",
+        text: "Do you want to cancel the order?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, cancel it!",
+        cancelButtonText: "No, keep it",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            await updateOrderStatus({ orderId: order.id, status: "cancelled" });
+            setStatus("cancelled");
+            Swal.fire("Cancelled!", "The order has been cancelled.", "success");
+          } catch (error) {
+            Swal.fire("Error", "There was an error cancelling the order.", "error");
+          }
+        }
+      });
     } else {
+      setStatus(newStatus);
       updateOrderStatus({ orderId: order.id, status: newStatus });
     }
   };
@@ -96,7 +128,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   const handlePaymentMethodChange = (method: string) => {
     setPaymentMethod(method);
     if (method === "cash-bank") {
-      setCashAmount(order.total_amount / 2); // Initial split for demonstration
+      setCashAmount(order.total_amount / 2);
       setBankAmount(order.total_amount / 2);
     } else {
       setCashAmount(order.total_amount);
@@ -105,6 +137,12 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   };
 
   const handleCashAmountChange = (amount: number) => {
+    if (amount < 0) {
+      amount = 0;
+    }
+    if (amount > order.total_amount) {
+      amount = order.total_amount;
+    }
     setCashAmount(amount);
     setBankAmount(order.total_amount - amount);
   };
@@ -144,7 +182,13 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
           </select>
           <button
             onClick={() => setShowAddProductModal(true)}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-blue-600 transition"
+            className={`px-4 py-2 rounded-md flex items-center transition 
+    ${
+      status === "delivered"
+        ? "bg-gray-400 text-gray-200 cursor-not-allowed" // Disabled state styles
+        : "bg-blue-500 text-white hover:bg-blue-600"
+    }`} // Enabled state styles
+            disabled={status === "delivered"} // Disable button if order is delivered (including order_without_bill)
           >
             <svg
               className="w-5 h-5 mr-1"
@@ -162,6 +206,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             </svg>
             Add Product
           </button>
+
           <button
             onClick={() => setShowPaymentModal(true)}
             className="bg-yellow-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-yellow-600 transition"
