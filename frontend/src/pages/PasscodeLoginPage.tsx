@@ -69,7 +69,7 @@ const PasscodeLoginPage = () => {
         alt="Logo"
         className="align-middle h-auto w-[150px] mb-5"
       />
-      <Card className="w-[350px]">
+      <Card className="sm:w-[450px]">
         <CardHeader>
           <CardTitle>Login with Passcode</CardTitle>
           <CardDescription>Enter your 6-digit passcode</CardDescription>
@@ -81,7 +81,7 @@ const PasscodeLoginPage = () => {
                 type="password"
                 value={passcode}
                 readOnly
-                className="text-center text-2xl mb-4"
+                className="text-center text-2xl h-16 mb-4"
               />
               {passcode && (
                 <span
@@ -92,6 +92,11 @@ const PasscodeLoginPage = () => {
                 </span>
               )}
             </div>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <div className="grid grid-cols-3 gap-2 mb-2">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                 <Button
@@ -105,17 +110,12 @@ const PasscodeLoginPage = () => {
               ))}
             </div>
             <Button
-                type="button"
-                onClick={() => handleNumberClick(0)}
-                className="flex w-full text-2xl h-16 mb-4"
-              >
-                {0}
-              </Button>
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+              type="button"
+              onClick={() => handleNumberClick(0)}
+              className="flex w-full text-2xl h-16 mb-6"
+            >
+              {0}
+            </Button>
             <Button
               className="w-full"
               type="submit"
@@ -127,7 +127,7 @@ const PasscodeLoginPage = () => {
           </form>
           <Link
             to="/login"
-            className="flex items-center justify-center gap-2 mt-4 text-center"
+            className="flex items-center justify-center gap-2 mt-2 text-center"
           >
             <span className="hover:underline">Login with username</span>
           </Link>

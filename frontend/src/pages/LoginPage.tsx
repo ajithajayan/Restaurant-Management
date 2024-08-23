@@ -16,7 +16,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowRight, EyeIcon, EyeOffIcon, RotateCcw } from "lucide-react";
+import { EyeIcon, EyeOffIcon, RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const LoginSchema = Yup.object().shape({
@@ -79,7 +79,7 @@ const LoginPage = () => {
         alt="Logo"
         className="align-middle h-auto w-[150px] mb-5"
       />
-      <Card className="w-[350px]">
+      <Card className="sm:w-[450px]">
         <CardHeader>
           <CardTitle>Sign in</CardTitle>
           <CardDescription></CardDescription>
