@@ -22,7 +22,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
     location.search.includes("showKitchenBill=true")
   );
   const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [billType, setBillType] = useState<"kitchen" | "sales">("sales");
+  const [paymentMethod, setPaymentMethod] = useState(order.payment_method || "cash");
+  const [cashAmount, setCashAmount] = useState(0);
+  const [bankAmount, setBankAmount] = useState(0);
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
 
@@ -30,7 +34,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
     ? order.items.filter((item) => item.is_new)
     : order.items;
 
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value as Order["status"];
     setStatus(newStatus);
 
@@ -40,6 +44,10 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
     } else if (newStatus === "delivered") {
       setBillType("sales");
       setShowModal(true);
+    } else if (newStatus === "order_without_bill") {
+      setBillType("kitchen");
+      await updateOrderStatus({ orderId: order.id, status: "delivered" });
+      handlePrint();
     } else {
       updateOrderStatus({ orderId: order.id, status: newStatus });
     }
@@ -49,20 +57,18 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
     products: { dish: Dish; quantity: number }[]
   ) => {
     try {
-      // Calculate the total amount for the entire order including new items
       const newTotalAmount = products.reduce(
         (sum, product) => sum + product.quantity * product.dish.price,
         0
       ) + order.total_amount;
 
-      // Update the order with the new items and the updated total amount
       const response = await api.put(`/orders/${order.id}/`, {
         items: products.map((product) => ({
           dish: product.dish.id,
           quantity: product.quantity,
           total_amount: product.quantity * product.dish.price,
         })),
-        total_amount: newTotalAmount, // Total amount for the order
+        total_amount: newTotalAmount,
       });
 
       if (response.status === 200) {
@@ -87,25 +93,58 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
     updateOrderStatus({ orderId: order.id, status });
   };
 
+  const handlePaymentMethodChange = (method: string) => {
+    setPaymentMethod(method);
+    if (method === "cash-bank") {
+      setCashAmount(order.total_amount / 2); // Initial split for demonstration
+      setBankAmount(order.total_amount / 2);
+    } else {
+      setCashAmount(order.total_amount);
+      setBankAmount(0);
+    }
+  };
+
+  const handleCashAmountChange = (amount: number) => {
+    setCashAmount(amount);
+    setBankAmount(order.total_amount - amount);
+  };
+
+  const handlePaymentSubmit = async () => {
+    try {
+      const response = await api.put(`/orders/${order.id}/`, {
+        payment_method: paymentMethod,
+        cash_amount: cashAmount,
+        bank_amount: bankAmount,
+      });
+
+      if (response.status === 200) {
+        setShowPaymentModal(false);
+      }
+    } catch (error) {
+      console.error("Failed to update payment method:", error);
+    }
+  };
+
   return (
-    <div key={order.id} className="bg-white p-6 rounded-lg shadow mb-6">
+    <div key={order.id} className="bg-white p-6 rounded-lg shadow mb-6 border border-gray-200">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Order #{order.id}</h2>
-        <div className="flex items-center space-x-2">
+        <h2 className="text-xl font-semibold text-gray-800">Order #{order.id}</h2>
+        <div className="flex items-center space-x-3">
           <select
             value={status}
             onChange={handleStatusChange}
-            className="border rounded p-1"
+            className="border rounded-md p-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isUpdating}
           >
             <option value="pending">Pending</option>
             <option value="approved">Kitchen Bill</option>
             <option value="cancelled">Cancelled</option>
             <option value="delivered">Order Success</option>
+            <option value="order_without_bill">Order Without Bill</option>
           </select>
           <button
             onClick={() => setShowAddProductModal(true)}
-            className="bg-blue-500 text-white px-3 py-1 rounded flex items-center"
+            className="bg-blue-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-blue-600 transition"
           >
             <svg
               className="w-5 h-5 mr-1"
@@ -123,26 +162,46 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             </svg>
             Add Product
           </button>
+          <button
+            onClick={() => setShowPaymentModal(true)}
+            className="bg-yellow-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-yellow-600 transition"
+          >
+            <svg
+              className="w-5 h-5 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M4 12h16M4 6h16M4 18h16"
+              ></path>
+            </svg>
+            Choose Payment
+          </button>
         </div>
       </div>
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="text-sm text-gray-500 mb-4">
         Ordered on: {new Date(order.created_at).toLocaleString()}
       </p>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {newlyAddedItems.map((item, index) => (
           <OrderItems key={index} orderItem={item} dishes={dishes} />
         ))}
       </div>
       <div className="mt-4 flex justify-end items-center">
-        <span className="text-lg font-semibold">
+        <span className="text-lg font-semibold text-gray-800">
           Total: QAR {order.total_amount}
         </span>
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">
               {billType === "kitchen" ? "Kitchen Bill" : "Sales Bill"}
             </h3>
             {status === "delivered" && (
@@ -151,22 +210,22 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
                 onChange={(e) =>
                   setBillType(e.target.value as "kitchen" | "sales")
                 }
-                className="border rounded px-2 py-2 w-full mb-4"
+                className="border rounded-md p-2 w-full mb-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="sales">Sales Bill</option>
                 <option value="kitchen">Kitchen Bill</option>
               </select>
             )}
-            <div className="flex justify-end">
+            <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowModal(false)}
-                className="bg-gray-500 text-white px-3 py-1 rounded mr-2"
+                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleGenerate}
-                className="bg-green-500 text-white px-3 py-1 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
                 disabled={!billType}
               >
                 Generate Bill
@@ -181,6 +240,62 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
           onClose={() => setShowAddProductModal(false)}
           onSubmit={handleAddProductSubmit}
         />
+      )}
+
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">Choose Payment Method</h3>
+            <select
+              value={paymentMethod}
+              onChange={(e) => handlePaymentMethodChange(e.target.value)}
+              className="border rounded-md p-2 w-full mb-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="cash">Cash</option>
+              <option value="bank">Bank</option>
+              <option value="cash-bank">Cash with Bank</option>
+              <option value="credit">Credit</option>
+            </select>
+
+            {paymentMethod === "cash-bank" && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-700 mb-1">Cash Amount</label>
+                  <input
+                    type="number"
+                    value={cashAmount}
+                    onChange={(e) => handleCashAmountChange(Number(e.target.value))}
+                    className="border rounded-md p-2 w-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1">Bank Amount</label>
+                  <input
+                    type="number"
+                    value={bankAmount}
+                    readOnly
+                    className="border rounded-md p-2 w-full text-gray-700 bg-gray-100 cursor-not-allowed"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-3 mt-4">
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePaymentSubmit}
+                className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
+              >
+                Confirm Payment
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="hidden">
