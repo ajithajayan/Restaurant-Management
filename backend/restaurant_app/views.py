@@ -456,3 +456,16 @@ class MessViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+
+
+
+class SearchDishesAPIView(APIView):
+    def get(self, request):
+        query = request.GET.get('search', '')
+        if query:
+            dishes = Dish.objects.filter(name__icontains=query)
+            serializer = DishSerializer(dishes, many=True)
+            return Response({'results': serializer.data}, status=status.HTTP_200_OK)
+        return Response({'results': []}, status=status.HTTP_200_OK)

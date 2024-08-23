@@ -22,7 +22,8 @@ from restaurant_app.views import (
     MenuViewSet,
     MenuItemViewSet,
     MessViewSet,
-    MessTypeViewSet
+    MessTypeViewSet,
+    SearchDishesAPIView  # Import the SearchDishesAPIView here
 )
 from delivery_drivers.views import (
     DeliveryDriverViewSet,
@@ -57,4 +58,5 @@ urlpatterns = [
     path('api/login-passcode/', PasscodeLoginView.as_view(), name='login-passcode'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/logout/', LogoutView.as_view({'post': 'logout'}), name='logout'),
+    path('api/search-dishes/', SearchDishesAPIView.as_view(), name='search_dishes'),  # Include the search API endpoint
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
