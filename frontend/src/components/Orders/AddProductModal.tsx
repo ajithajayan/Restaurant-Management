@@ -11,11 +11,12 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const [productSearch, setProductSearch] = useState("");
+  const [productSearch, setProductSearch] = useState<string>("");
   const [suggestions, setSuggestions] = useState<Dish[]>([]);
   const [addedProducts, setAddedProducts] = useState<
     { dish: Dish; quantity: number }[]
   >([]);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -23,7 +24,9 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
       if (productSearch.length > 1) {
         try {
           // Use the correct API endpoint here
-          const response = await api.get(`search-dishes/?search=${productSearch}`);
+          const response = await api.get(
+            `search-dishes/?search=${productSearch}`
+          );
           if (response && response.data && response.data.results) {
             setSuggestions(response.data.results);
           } else {
@@ -42,21 +45,21 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
   }, [productSearch]);
 
   const handleAddProduct = (dish: Dish) => {
-    const existingProduct = addedProducts.find(
-      (product) => product.dish.id === dish.id
-    );
+    setAddedProducts((prevProducts) => {
+      const existingProduct = prevProducts.find(
+        (product) => product.dish.id === dish.id
+      );
 
-    if (existingProduct) {
-      setAddedProducts(
-        addedProducts.map((product) =>
+      if (existingProduct) {
+        return prevProducts.map((product) =>
           product.dish.id === dish.id
             ? { ...product, quantity: product.quantity + 1 }
             : product
-        )
-      );
-    } else {
-      setAddedProducts([...addedProducts, { dish, quantity: 1 }]);
-    }
+        );
+      } else {
+        return [...prevProducts, { dish, quantity: 1 }];
+      }
+    });
 
     setProductSearch("");
     setSuggestions([]);
@@ -64,29 +67,34 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
   };
 
   const handleQuantityChange = (index: number, quantity: number) => {
-    const updatedProducts = [...addedProducts];
-    updatedProducts[index].quantity = quantity > 0 ? quantity : 1;
-    setAddedProducts(updatedProducts);
+    setAddedProducts((prevProducts) => {
+      const updatedProducts = [...prevProducts];
+      updatedProducts[index].quantity = Math.max(quantity, 1);
+      return updatedProducts;
+    });
   };
 
   const handleRemoveProduct = (index: number) => {
-    const updatedProducts = addedProducts.filter((_, i) => i !== index);
-    setAddedProducts(updatedProducts);
+    setAddedProducts((prevProducts) =>
+      prevProducts.filter((_, i) => i !== index)
+    );
   };
+
+  const calculateTotal = () => {
+    const totalValue = addedProducts.reduce(
+      (sum, product) => sum + product.quantity * product.dish.price,
+      0
+    );
+    setTotalAmount(totalValue);
+  };
+
+  useEffect(() => {
+    calculateTotal();
+  }, [addedProducts]);
 
   const handleFinalSubmit = () => {
     onSubmit(addedProducts);
     onClose();
-  };
-
-  const calculateTotal = () => {
-    return addedProducts
-      .reduce(
-        (sum, product) =>
-          sum + product.quantity * parseFloat(product.dish.price),
-        0
-      )
-      .toFixed(2);
   };
 
   return (
@@ -103,7 +111,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
           placeholder="Search product..."
           className="border rounded p-2 w-full mb-4 focus:outline-none focus:ring focus:border-blue-300"
         />
-        {suggestions && suggestions.length > 0 && (
+        {suggestions.length > 0 && (
           <ul className="border rounded mb-4 max-h-40 overflow-y-auto bg-white">
             {suggestions.map((dish) => (
               <li
@@ -145,12 +153,11 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                         min="1"
                       />
                     </td>
-                    <td className="border p-2">QAR {product.dish.price}</td>
                     <td className="border p-2">
-                      QAR{" "}
-                      {(
-                        product.quantity * parseFloat(product.dish.price)
-                      ).toFixed(2)}
+                      QAR {product.dish.price}
+                    </td>
+                    <td className="border p-2">
+                      QAR {(product.quantity * product.dish.price).toFixed(2)}
                     </td>
                     <td className="border p-2">
                       <button
@@ -169,7 +176,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
 
         <div className="flex justify-between items-center mt-4">
           <span className="text-lg font-semibold">
-            Total: QAR {calculateTotal()}
+            Total: QAR {totalAmount.toFixed(2)}
           </span>
           <div className="flex space-x-2">
             <button
