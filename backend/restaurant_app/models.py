@@ -17,7 +17,7 @@ class User(AbstractUser):
         ("female", "Female"),
         ("other", "Other"),
     )
-    role = models.CharField(max_length=10, choices=ROLES, default="staff")
+    role = models.CharField(max_length=10, choices=ROLES, blank=True, null=True)
     passcode = models.CharField(max_length=6, blank=True, null=True)
     gender = models.CharField(max_length=10, choices=GENDERS, null=True, blank=True)
     mobile_number = models.CharField(max_length=15, blank=True)
@@ -36,7 +36,7 @@ class User(AbstractUser):
             self.is_staff = False
             self.is_superuser = False
 
-        if self.pk is None or not self.password.startswith("pbkdf2_"):
+        if self.password and not self.password.startswith("pbkdf2_"):
             self.password = make_password(self.password)
 
         super().save(*args, **kwargs)
