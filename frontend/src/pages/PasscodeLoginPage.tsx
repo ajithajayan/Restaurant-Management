@@ -14,7 +14,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, RotateCcw, X } from "lucide-react";
+import { RotateCcw, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const PasscodeLoginPage = () => {
@@ -92,8 +92,8 @@ const PasscodeLoginPage = () => {
                 </span>
               )}
             </div>
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                 <Button
                   key={num}
                   type="button"
@@ -104,6 +104,13 @@ const PasscodeLoginPage = () => {
                 </Button>
               ))}
             </div>
+            <Button
+                type="button"
+                onClick={() => handleNumberClick(0)}
+                className="flex w-full text-2xl h-16 mb-4"
+              >
+                {0}
+              </Button>
             {error && (
               <Alert variant="destructive" className="mb-4">
                 <AlertDescription>{error}</AlertDescription>
