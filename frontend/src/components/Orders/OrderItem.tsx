@@ -1,54 +1,71 @@
 import React from "react";
 import { Minus, Plus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-const OrderItem: React.FC<any> = ({
+interface OrderItemProps {
+  orderItem: {
+    id: number;
+    name: string;
+    price: number;
+    image: string;
+    quantity: number;
+  };
+  incrementQuantity: (id: number) => void;
+  decrementQuantity: (id: number) => void;
+  removeItem: (id: number) => void;
+}
+
+const OrderItem: React.FC<OrderItemProps> = ({
   orderItem,
   incrementQuantity,
   decrementQuantity,
   removeItem,
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-center bg-blue-50 p-4 rounded-lg mb-2">
-      <button
-        className="text-red-500 rounded-full p-1 mr-2"
-        onClick={() => removeItem(orderItem.id!)}
-      >
-        <X size={16} />
-      </button>
-      <img
-        src={orderItem ? orderItem.image : "/placeholder-image.png"}
-        alt={orderItem ? orderItem.name : "Dish"}
-        className="w-12 h-12 object-cover rounded"
-      />
-      <div className="flex-grow ml-4">
-        <h4 className="font-semibold">
-          {orderItem ? orderItem.name : "Loading..."}
-        </h4>
-        <span className="text-red-500">
-          QAR {orderItem ? orderItem.price : "0.00"}
-        </span>
+    <div className="flex flex-col sm:flex-row items-center justify-between bg-white shadow-md rounded-lg p-4 mb-2 transition-all hover:shadow-lg">
+      <div className="flex items-center w-full sm:w-auto mb-4 sm:mb-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-red-500 mr-2"
+          onClick={() => removeItem(orderItem.id)}
+        >
+          <X size={16} />
+        </Button>
+        <img
+          src={orderItem.image || "/placeholder-image.png"}
+          alt={orderItem.name}
+          className="w-16 h-16 object-cover rounded-md"
+        />
+        <div className="ml-4 flex-grow">
+          <h4 className="font-semibold text-lg">{orderItem.name}</h4>
+          <span className="text-red-500 font-medium">
+            QAR {orderItem.price}
+          </span>
+        </div>
       </div>
-      <div>
-        <div className="flex items-center">
-          <button
-            className="text-white border rounded-full p-1 bg-gray-600"
-            onClick={() => decrementQuantity(orderItem.id!)}
+      <div className="flex flex-col items-center sm:items-end">
+        <div className="flex items-center mb-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => decrementQuantity(orderItem.id)}
           >
             <Minus size={16} />
-          </button>
-          <span className="mx-2">x{orderItem.quantity}</span>
-          <button
-            className="text-white border rounded-full p-1 bg-red-500"
-            onClick={() => incrementQuantity(orderItem.id!)}
+          </Button>
+          <span className="mx-3 font-semibold">{orderItem.quantity}</span>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => incrementQuantity(orderItem.id)}
           >
             <Plus size={16} />
-          </button>
+          </Button>
         </div>
-        <span className="font-semibold text-lg flex justify-center mt-2">
-          QR
-          {orderItem
-            ? (orderItem.price * orderItem.quantity).toFixed(2)
-            : "0.00"}
+        <span className="font-semibold text-lg text-green-600">
+          QAR {(orderItem.price * orderItem.quantity).toFixed(2)}
         </span>
       </div>
     </div>

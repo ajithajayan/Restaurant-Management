@@ -32,15 +32,15 @@
 }
 
 .invisible-scrollbar::-webkit-scrollbar {
-  width: 0px;
+  width: 4px;
 }
 
 .invisible-scrollbar::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #eee;
 }
 
 .invisible-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #cbc8c8;
+  background-color: #00000037;
   border-radius: 4px;
 }
 

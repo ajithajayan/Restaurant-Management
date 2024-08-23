@@ -14,6 +14,9 @@ class DeliveryDriver(models.Model):
     is_active = models.BooleanField(default=False)
     is_available = models.BooleanField(default=False)
 
+    class Meta:
+        ordering = ("-is_active",)
+
     def __str__(self):
         return f"{self.user.username} - {'Active' if self.is_active else 'Inactive'}"
 

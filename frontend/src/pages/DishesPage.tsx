@@ -1,4 +1,8 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "react-query";
+import { Check, ChevronsUpDown, CircleCheckBig, Search } from "lucide-react";
+
 import Layout from "../components/Layout/Layout";
 import DishList from "../components/Dishes/DishList";
 import OrderItem from "../components/Orders/OrderItem";
@@ -10,9 +14,6 @@ import {
   fetchUnreadCount,
   getCategories,
 } from "../services/api";
-import { useQuery } from "react-query";
-import { Check, ChevronsUpDown, CircleCheckBig } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -31,25 +32,28 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import Loader from "@/components/Layout/Loader";
 
 type OrderType = "dining" | "takeaway" | "delivery";
 type PaymentMethod = "cash" | "bank" | "cash-bank";
+
+type OrderDish = Dish & { quantity: number };
 
 const DishesPage: React.FC = () => {
   const navigate = useNavigate();
   const { dishes, isLoading, isError, addDishToOrder, page, setPage } =
     useDishes();
   const { createOrder } = useOrders();
-  const { data: categories } = useQuery("categories", getCategories);
-  const { data: deliveryDriversList } = useQuery(
+  const { data: categories } = useQuery<Category[]>(
+    "categories",
+    getCategories
+  );
+  const { data: deliveryDriversList } = useQuery<{ results: DeliveryDriver[] }>(
     "deliveryDrivers",
     fetchDeliveryDrivers
   );
-  const deliveryDrivers = deliveryDriversList
-    ? deliveryDriversList.results
-    : null;
 
-  const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderDish[]>([]);
   const [isOrderVisible, setIsOrderVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -65,7 +69,7 @@ const DishesPage: React.FC = () => {
   const [openDriverSelect, setOpenDriverSelect] = useState(false);
   const [error, setError] = useState("");
 
-  const data = dishes?.results ? dishes.results : [];
+  const data = dishes?.results || [];
 
   const handleAddDish = (dish: Dish) => {
     addDishToOrder(dish.id, 1);
@@ -73,7 +77,9 @@ const DishesPage: React.FC = () => {
     if (existingItem) {
       setOrderItems(
         orderItems.map((item) =>
-          item.id === dish.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === dish.id
+            ? { ...item, quantity: (item.quantity || 0) + 1 }
+            : item
         )
       );
     } else {
@@ -82,26 +88,16 @@ const DishesPage: React.FC = () => {
     setIsOrderVisible(true);
   };
 
-  const incrementQuantity = (id: number) => {
+  const updateQuantity = (id: number, change: number) => {
     setOrderItems(
-      orderItems.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-      )
+      orderItems
+        .map((item) =>
+          item.id === id
+            ? { ...item, quantity: Math.max((item.quantity || 0) + change, 0) }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
     );
-  };
-
-  const decrementQuantity = (id: number) => {
-    setOrderItems(
-      orderItems.map((item) =>
-        item.id === id && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      )
-    );
-  };
-
-  const removeItem = (id: number) => {
-    setOrderItems(orderItems.filter((item) => item.id !== id));
   };
 
   const handleCheckout = () => {
@@ -120,14 +116,20 @@ const DishesPage: React.FC = () => {
       const orderData: OrderFormData = {
         items: orderItems.map((item) => ({
           dish: item.id,
-          quantity: item.quantity,
+          quantity: item.quantity || 0,
         })),
-        total_amount: total.toFixed(2),
+        total_amount: parseFloat(total.toFixed(2)),
         status: "pending",
         order_type: orderType,
         payment_method: paymentMethod,
-        bank_amount: paymentMethod === "cash-bank" ? parseFloat(bankAmount) || 0 : undefined,
-        cash_amount: paymentMethod === "cash-bank" ? parseFloat(cashAmount) || 0 : undefined,
+        bank_amount:
+          paymentMethod === "cash-bank"
+            ? parseFloat(bankAmount) || 0
+            : undefined,
+        cash_amount:
+          paymentMethod === "cash-bank"
+            ? parseFloat(cashAmount) || 0
+            : undefined,
         address: orderType === "delivery" ? deliveryAddress : "",
         delivery_driver_id:
           orderType === "delivery" && selectedDriver ? selectedDriver.id : null,
@@ -138,7 +140,7 @@ const DishesPage: React.FC = () => {
       setOrderItems([]);
       setIsOrderVisible(false);
     } catch (error) {
-      console.log(`Error creating order: ${error}`);
+      console.error(`Error creating order:`, error);
       setError("An error occurred while creating the order. Please try again.");
     }
   };
@@ -170,113 +172,102 @@ const DishesPage: React.FC = () => {
     setPage(newPage);
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error loading dishes</div>;
+  if (isLoading)
+    return (
+      <Layout>
+        <Loader />
+      </Layout>
+    );
+  if (isError)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Error loading dishes
+      </div>
+    );
 
-  const subtotal = orderItems
-    .filter((item) => typeof item.dish !== "number")
-    .reduce((sum, item) => sum + item.price * item.quantity, 0);
-  // const gst = subtotal * 0.1;
-  // const total = subtotal + gst;
+  const subtotal = orderItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
   const total = subtotal;
 
   return (
     <Layout>
       <div className="flex flex-col lg:flex-row">
-        <div className={`w-full pr-4`}>
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold">Choose Categories</h2>
-            <div className="flex items-center">
-              <input
+        <div className="w-full pr-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
+            <h2 className="text-3xl font-bold mb-4 sm:mb-0">
+              Choose Categories
+            </h2>
+            <div className="flex items-center w-full sm:w-auto">
+              <Input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search products..."
-                className="border border-gray-300 rounded px-4 py-2 mr-2"
+                className="w-full sm:w-64 mr-2"
               />
-              <button
-                onClick={() => {}}
-                className="bg-red-500 text-white rounded px-4 py-2"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M21 21l-4.35-4.35m1.1-5.9a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"
-                  ></path>
-                </svg>
-              </button>
+              <Button variant="outline" size="icon">
+                <Search className="h-4 w-4" />
+              </Button>
             </div>
           </div>
           <div className="flex flex-wrap gap-2 mb-8">
-            <button
+            <Button
               onClick={() => handleCategoryClick(null)}
-              className={`px-4 py-2 rounded-lg shadow-md ${
-                selectedCategory === null
-                  ? "bg-red-100 text-red-500"
-                  : "bg-white"
-              }`}
+              variant={selectedCategory === null ? "default" : "outline"}
             >
               All items
-            </button>
-            {categories?.map((category: Category, index) => (
-              <button
-                key={index}
+            </Button>
+            {categories?.map((category) => (
+              <Button
+                key={category.id}
                 onClick={() => handleCategoryClick(category.id)}
-                className={`px-4 py-2 rounded-lg shadow-md ${
-                  selectedCategory === category.id
-                    ? "bg-red-100 text-red-500"
-                    : "bg-white"
-                }`}
+                variant={
+                  selectedCategory === category.id ? "default" : "outline"
+                }
               >
                 {category.name}
-              </button>
+              </Button>
             ))}
           </div>
           <DishList dishes={filteredDishes} onAddDish={handleAddDish} />
           <div className="flex justify-center mt-16">
-            <button
+            <Button
               onClick={() => handlePageChange(page - 1)}
               disabled={page === 1}
-              className="px-4 py-2 bg-red-500 text-white rounded-l-lg disabled:bg-red-400 disabled:cursor-not-allowed"
+              className="mr-2"
             >
               Previous
-            </button>
-            <span className="px-4 py-2 bg-gray-200">{page}</span>
-            <button
+            </Button>
+            <span className="px-4 py-2 bg-gray-200 rounded">{page}</span>
+            <Button
               onClick={() => handlePageChange(page + 1)}
               disabled={!dishes?.next}
-              className="px-4 py-2 bg-red-500 text-white rounded-r-lg disabled:bg-red-400 disabled:cursor-not-allowed"
+              className="ml-2"
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
         {orderItems.length > 0 && (
           <div
-            className={` bg-white p-8 ${
-              isOrderVisible
-                ? "flex justify-end lg:w-[550px]"
-                : "hidden lg:block"
+            className={`w-full lg:w-[550px] bg-white p-8 mt-2 ${
+              isOrderVisible ? "block" : "hidden lg:block"
             }`}
           >
             <div className="sticky top-0">
-              <h2 className="text-2xl font-bold mb-6">New Order</h2>
-              <div className="space-y-4">
-                {orderItems.map((item, index) => (
+              <h2 className="text-2xl font-bold mb-4">New Order</h2>
+              <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
+                {orderItems.map((item) => (
                   <OrderItem
-                    key={index}
+                    key={item.id}
                     orderItem={item}
-                    incrementQuantity={incrementQuantity}
-                    decrementQuantity={decrementQuantity}
-                    removeItem={removeItem}
+                    incrementQuantity={() => updateQuantity(item.id, 1)}
+                    decrementQuantity={() => updateQuantity(item.id, -1)}
+                    removeItem={() =>
+                      updateQuantity(item.id, -(item.quantity || 0))
+                    }
                   />
                 ))}
               </div>
@@ -285,163 +276,146 @@ const DishesPage: React.FC = () => {
                   <span>Subtotal</span>
                   <span>QAR {subtotal.toFixed(2)}</span>
                 </div>
-                {/* <div className="flex justify-between mb-2">
-                  <span>GST (10%)</span>
-                  <span>QR{gst.toFixed(2)}</span>
-                </div> */}
                 <div className="flex justify-between font-bold">
                   <span>Total</span>
                   <span>QAR {total.toFixed(2)}</span>
                 </div>
               </div>
-              <div className="mt-2 pr-2 overflow-y-auto custom-scrollbar max-h-[500px]">
-                <div className="mt-8">
-                  <RadioGroup
-                    value={orderType}
-                    onValueChange={(value) => setOrderType(value as OrderType)}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="dining" id="dining" />
-                      <Label htmlFor="dining">Dining</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="takeaway" id="takeaway" />
-                      <Label htmlFor="takeaway">Takeaway</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="delivery" id="delivery" />
-                      <Label htmlFor="delivery">Delivery</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                {orderType === "delivery" && (
-                  <>
-                    <div className="mt-4">
-                      <Label htmlFor="deliveryAddress">Delivery Address</Label>
-                      <Input
-                        id="deliveryAddress"
-                        value={deliveryAddress}
-                        onChange={(e) => setDeliveryAddress(e.target.value)}
-                        placeholder="Enter delivery address"
-                      />
-                    </div>
-
-                    <div className="mt-4">
-                      <Label>Select Delivery Driver</Label>
-                      <Popover
-                        open={openDriverSelect}
-                        onOpenChange={setOpenDriverSelect}
-                      >
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={openDriverSelect}
-                            className="w-full justify-between"
-                          >
-                            {selectedDriver
-                              ? selectedDriver.username
-                              : "Select driver..."}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0">
-                          <Command>
-                            <CommandInput placeholder="Search drivers..." />
-                            <CommandList>
-                              <CommandEmpty>No driver found.</CommandEmpty>
-                              <CommandGroup>
-                                {deliveryDrivers?.map(
-                                  (driver: DeliveryDriver) => (
-                                    <CommandItem
-                                      key={driver.id}
-                                      value={driver.username}
-                                      onSelect={() => {
-                                        setSelectedDriver(driver);
-                                        setOpenDriverSelect(false);
-                                      }}
-                                    >
-                                      <Check
-                                        className={`mr-2 h-4 w-4 ${
-                                          selectedDriver?.id === driver.id
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        }`}
-                                      />
-                                      {driver.username}
-                                    </CommandItem>
-                                  )
-                                )}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </>
-                )}
-
-                <div className="mt-8 mb-4">
-                  <RadioGroup
-                    value={paymentMethod}
-                    onValueChange={(value) =>
-                      setPaymentMethod(value as PaymentMethod)
-                    }
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="cash" id="cash" />
-                      <Label htmlFor="cash">Cash</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="bank" id="bank" />
-                      <Label htmlFor="bank">Bank</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="cash-bank" id="cash-bank" />
-                      <Label htmlFor="cash-bank">Cash & Bank</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {paymentMethod === "cash-bank" && (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex w-full max-w-sm items-center gap-1.5">
-                      <Label htmlFor="cash_value">Cash</Label>
-                      <Input
-                        type="text"
-                        id="cash_value"
-                        placeholder="Cash"
-                        className="focus:outline-none"
-                        value={cashAmount}
-                        onChange={(e) => setCashAmount(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex w-full max-w-sm items-center gap-1.5">
-                      <Label htmlFor="bank_value">Bank</Label>
-                      <Input
-                        type="text"
-                        id="bank_value"
-                        placeholder="Bank"
-                        className="focus:outline-none"
-                        value={bankAmount}
-                        onChange={(e) => setBankAmount(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {error && (
-                  <Alert variant="destructive" className="mt-4">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                <button
-                  className="w-full bg-red-500 text-white py-3 rounded-lg mt-6"
-                  onClick={handleCheckout}
+              <div className="mt-8">
+                <RadioGroup
+                  value={orderType}
+                  onValueChange={(value) => setOrderType(value as OrderType)}
                 >
-                  Checkout
-                </button>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="dining" id="dining" />
+                    <Label htmlFor="dining">Dining</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="takeaway" id="takeaway" />
+                    <Label htmlFor="takeaway">Takeaway</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="delivery" id="delivery" />
+                    <Label htmlFor="delivery">Delivery</Label>
+                  </div>
+                </RadioGroup>
               </div>
+              {orderType === "delivery" && (
+                <>
+                  <div className="mt-4">
+                    <Label htmlFor="deliveryAddress">Delivery Address</Label>
+                    <Input
+                      id="deliveryAddress"
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      placeholder="Enter delivery address"
+                    />
+                  </div>
+                  <div className="mt-4">
+                    <Label>Select Delivery Driver</Label>
+                    <Popover
+                      open={openDriverSelect}
+                      onOpenChange={setOpenDriverSelect}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openDriverSelect}
+                          className="w-full justify-between"
+                        >
+                          {selectedDriver
+                            ? selectedDriver.username
+                            : "Select driver..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Search drivers..." />
+                          <CommandList>
+                            <CommandEmpty>No driver found.</CommandEmpty>
+                            <CommandGroup>
+                              {deliveryDriversList?.results.map((driver) => (
+                                <CommandItem
+                                  key={driver.id}
+                                  value={driver.username}
+                                  onSelect={() => {
+                                    setSelectedDriver(driver);
+                                    setOpenDriverSelect(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      selectedDriver?.id === driver.id
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    }`}
+                                  />
+                                  {driver.username}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </>
+              )}
+              <div className="mt-8 mb-4">
+                <RadioGroup
+                  value={paymentMethod}
+                  onValueChange={(value) =>
+                    setPaymentMethod(value as PaymentMethod)
+                  }
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="cash" id="cash" />
+                    <Label htmlFor="cash">Cash</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="bank" id="bank" />
+                    <Label htmlFor="bank">Bank</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="cash-bank" id="cash-bank" />
+                    <Label htmlFor="cash-bank">Cash & Bank</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              {paymentMethod === "cash-bank" && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex w-full max-w-sm items-center gap-1.5">
+                    <Label htmlFor="cash_value">Cash</Label>
+                    <Input
+                      type="text"
+                      id="cash_value"
+                      placeholder="Cash"
+                      value={cashAmount}
+                      onChange={(e) => setCashAmount(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex w-full max-w-sm items-center gap-1.5">
+                    <Label htmlFor="bank_value">Bank</Label>
+                    <Input
+                      type="text"
+                      id="bank_value"
+                      placeholder="Bank"
+                      value={bankAmount}
+                      onChange={(e) => setBankAmount(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+              {error && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              <Button className="w-full mt-6" onClick={handleCheckout}>
+                Checkout
+              </Button>
             </div>
           </div>
         )}
@@ -449,17 +423,12 @@ const DishesPage: React.FC = () => {
       {showSuccessModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg flex flex-col items-center">
-            <div className="flex justify-center items-center">
-              <CircleCheckBig size={48} />
-            </div>
+            <CircleCheckBig size={48} className="text-green-500 mb-4" />
             <h2 className="text-2xl font-bold mb-4">Order Success</h2>
             <p>Your order has been placed successfully!</p>
-            <button
-              className="mt-4 bg-red-500 text-white py-2 px-4 rounded-lg"
-              onClick={handleCloseBtnClick}
-            >
+            <Button className="mt-4" onClick={handleCloseBtnClick}>
               Close
-            </button>
+            </Button>
           </div>
         </div>
       )}

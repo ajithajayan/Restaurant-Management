@@ -28,8 +28,8 @@ const Sidebar: React.FC = () => {
 
   const isActive = (path: string) => {
     return location.pathname === path
-      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
-      : "hover:bg-gradient-to-r from-purple-500 to-pink-500 hover:text-white";
+      ? "bg-black text-white transition-all"
+      : "hover:bg-black hover:text-white";
   };
 
   const menuItems = [
@@ -80,9 +80,10 @@ const Sidebar: React.FC = () => {
   return (
     <div className="w-20 md:w-72 bg-white p-4 h-screen border-r border-gray-300 flex flex-col">
       <Link to="/" className="mb-8 flex justify-center md:justify-start">
-        <img src="/images/logo.png" alt="Logo" className="h-8 w-auto" />
+        <img src="/images/logo.png" alt="Logo" className="hidden sm:block h-8 w-auto" />
+        <img src="/images/nasscript_company_logo.jpg" alt="Logo" className="block sm:hidden h-8 w-8" />
       </Link>
-      <div className="overflow-y-auto invisible-scrollbar">
+      <div className="overflow-y-auto overflow-x-hidden invisible-scrollbar flex flex-col justify-between h-screen">
         <nav className="flex-grow mr-2">
           <ul className="space-y-2">{menuItems.map(renderMenuItem)}</ul>
         </nav>
@@ -96,15 +97,15 @@ const Sidebar: React.FC = () => {
                 <TooltipTrigger asChild>
                   <Link
                     to="/notifications"
-                    className={`flex items-center space-x-2 p-2 rounded ${isActive(
+                    className={`relative flex items-center space-x-2 p-2 mr-2 rounded ${isActive(
                       "/notifications"
                     )}`}
                   >
                     <Bell className="w-6 h-6" />
+                    <NotificationBadge className="absolute -mt-5" />
                     <span className="hidden md:inline font-bold">
                       Notifications
                     </span>
-                    <NotificationBadge className="ml-auto" />
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="md:hidden">
@@ -122,7 +123,7 @@ const Sidebar: React.FC = () => {
         rel="noopener noreferrer"
         className="mt-4 flex justify-center items-center"
       >
-        <p className="text-black-600 text-md md:text-md font-bold">
+        <p className="hidden sm:block text-black-600 text-md md:text-md font-bold">
           Powered by
         </p>
         <img
