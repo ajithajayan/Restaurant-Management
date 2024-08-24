@@ -100,6 +100,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["request"] = self.request
@@ -319,6 +320,23 @@ class OrderViewSet(viewsets.ModelViewSet):
         }
 
         return Response(trends)
+
+
+class OrderStatusUpdateViewSet(viewsets.GenericViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderStatusUpdateSerializer
+
+    def partial_update(self, request, pk=None):
+        try:
+            order = self.get_object()
+        except Order.DoesNotExist:
+            return Response({"detail": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(order, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "Order updated successfully."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BillViewSet(viewsets.ModelViewSet):

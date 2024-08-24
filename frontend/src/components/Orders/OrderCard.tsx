@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Swal from "sweetalert2";
 import { Order, Dish } from "../../types";
 import OrderItems from "./OrderItems";
@@ -9,13 +9,21 @@ import { useReactToPrint } from "react-to-print";
 import { useLocation } from "react-router-dom";
 import AddProductModal from "./AddProductModal";
 import { api } from "../../services/api";
+import ReactSelect from "react-select";
+import {
+  fetchActiveCreditUsers,
+  updateOrderStatusNew,
+} from "../../services/api";
 
 interface OrderCardProps {
   order: Order;
   dishes: Dish[];
 }
 
-const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) => {
+const OrderCard: React.FC<OrderCardProps> = ({
+  order: initialOrder,
+  dishes,
+}) => {
   const location = useLocation();
   const [status, setStatus] = useState(initialOrder.status);
   const { updateOrderStatus, isLoading: isUpdating } = useUpdateOrderStatus();
@@ -32,20 +40,44 @@ const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) =>
 
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
+  const [creditCardUsers, setCreditCardUsers] = useState<CreditUser[]>([]);
+  const [selectedCreditUser, setSelectedCreditUser] =
+    useState<CreditUser | null>(null);
+  const [openCreditUserSelect, setOpenCreditUserSelect] = useState(false);
 
-  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  useEffect(() => {
+    const loadCreditCardUsers = async () => {
+      try {
+        const users = await fetchActiveCreditUsers();
+        setCreditCardUsers(users);
+      } catch (error) {
+        console.error("Failed to load credit card users:", error);
+      }
+    };
+    loadCreditCardUsers();
+  }, []);
+
+  const handleStatusChange = async (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     const newStatus = e.target.value as Order["status"];
-  
+
     if (!order) {
       console.error("Order is undefined");
       return; // Exit if order is undefined
     }
-  
+
     setStatus(newStatus);
-  
+
     if (newStatus === "approved") {
       setBillType("kitchen");
       setShowModal(true);
+      try {
+        await updateOrderStatusNew(order.id, "approved");
+      } catch (error) {
+        console.error("Error updating status to approved:", error);
+        Swal.fire("Error", "Failed to update status to approved.", "error");
+      }
     } else if (newStatus === "delivered") {
       Swal.fire({
         title: "Choose Payment Method",
@@ -72,11 +104,24 @@ const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) =>
       }).then(async (result) => {
         if (result.isConfirmed) {
           setBillType("kitchen");
-          await updateOrderStatus({ orderId: order.id, status: "delivered" });
-          setStatus("delivered");
-          setShowAddProductModal(false);
-          handlePrint();
-          Swal.fire("Success!", "The kitchen bill has been printed.", "success");
+          try {
+            await updateOrderStatusNew(order.id, "delivered");
+            setStatus("delivered");
+            setShowAddProductModal(false);
+            handlePrint();
+            Swal.fire(
+              "Success!",
+              "The kitchen bill has been printed.",
+              "success"
+            );
+          } catch (error) {
+            console.error("Error updating status to delivered:", error);
+            Swal.fire(
+              "Error",
+              "Failed to update status to delivered.",
+              "error"
+            );
+          }
         }
       });
     } else if (newStatus === "cancelled") {
@@ -90,13 +135,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) =>
       }).then(async (result) => {
         if (result.isConfirmed) {
           try {
-            await updateOrderStatus({ orderId: order.id, status: "cancelled" });
+            await updateOrderStatusNew(order.id, "cancelled");
             setStatus("cancelled");
             Swal.fire("Cancelled!", "The order has been cancelled.", "success");
-  
-            // Logic to remove the order from the UI
-            onOrderCancelled(order.id); // Trigger the parent component to remove the order from the list
           } catch (error) {
+            console.error("Error cancelling order:", error);
             Swal.fire(
               "Error",
               "There was an error cancelling the order.",
@@ -109,23 +152,29 @@ const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) =>
       });
     } else {
       try {
-        await updateOrderStatus({ orderId: order.id, status: newStatus });
+        await updateOrderStatusNew(order.id, newStatus);
       } catch (error) {
+        console.error("Error updating status:", error);
         setStatus(order.status); // Revert status if update failed
       }
     }
   };
-  
-  
+
+  const disableAllActions = () => {
+    setShowModal(false);
+    setShowAddProductModal(false);
+    setShowPaymentModal(false);
+  };
 
   const handleAddProductSubmit = async (
     products: { dish: Dish; quantity: number }[]
   ) => {
     try {
-      const newTotalAmount = products.reduce(
-        (sum, product) => sum + product.quantity * product.dish.price,
-        0
-      ) + order.total_amount;
+      const newTotalAmount =
+        products.reduce(
+          (sum, product) => sum + product.quantity * product.dish.price,
+          0
+        ) + order.total_amount;
 
       const response = await api.put(`/orders/${order.id}/`, {
         items: products.map((product) => ({
@@ -186,23 +235,36 @@ const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) =>
 
   const handlePaymentSubmit = async () => {
     try {
-      const response = await api.put(`/orders/${order.id}/`, {
+      // Prepare the payload to send to the API
+      const additionalData = {
         payment_method: paymentMethod,
-        cash_amount: cashAmount,
-        bank_amount: bankAmount,
-      });
+        cash_amount: paymentMethod === "cash-bank" ? cashAmount : undefined,
+        bank_amount: paymentMethod === "cash-bank" ? bankAmount : undefined,
+        credit_user_id:
+          paymentMethod === "credit" && selectedCreditUser
+            ? selectedCreditUser.id
+            : undefined,
+      };
 
-      if (response.status === 200) {
-        setShowPaymentModal(false);
+      // Send the updated status and additional payment-related data to the API
+      await updateOrderStatusNew(order.id, "delivered", additionalData);
 
-        // Mark the order as delivered after successful payment
-        await updateOrderStatus({ orderId: order.id, status: "delivered" });
-        setStatus("delivered");
-        Swal.fire("Success!", "The order has been marked as delivered.", "success");
-      }
+      setShowPaymentModal(false);
+      setStatus("delivered");
+      disableAllActions();
+
+      Swal.fire(
+        "Success!",
+        "The order has been marked as delivered and payment method updated.",
+        "success"
+      );
     } catch (error) {
-      console.error("Failed to update payment method:", error);
-      Swal.fire("Error", "Failed to process the payment.", "error");
+      console.error("Failed to update payment method and status:", error);
+      Swal.fire(
+        "Error",
+        "Failed to process the payment and update status.",
+        "error"
+      );
     }
   };
 
@@ -244,7 +306,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) =>
             value={status}
             onChange={handleStatusChange}
             className="border rounded-md p-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isUpdating || status === "delivered"} // Disable if order is delivered
+            disabled={
+              isUpdating || status === "delivered" || status === "cancelled"
+            } // Disable if order is delivered or cancelled
           >
             <option value="pending">Pending</option>
             <option value="approved">Kitchen Bill</option>
@@ -257,11 +321,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) =>
             onClick={() => setShowAddProductModal(true)}
             className={`w-full sm:w-auto px-4 py-2 rounded-md flex items-center transition 
             ${
-              status === "delivered"
+              status === "delivered" || status === "cancelled"
                 ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                 : "bg-blue-500 text-white hover:bg-blue-600"
             }`}
-            disabled={status === "delivered"}
+            disabled={status === "delivered" || status === "cancelled"} // Disable if order is delivered or cancelled
           >
             <svg
               className="w-5 h-5 mr-1"
@@ -280,12 +344,14 @@ const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) =>
             Add Product
           </button>
 
-          <button
+          {/* <button
             onClick={() => setShowPaymentModal(true)}
             className={`w-full sm:w-auto bg-yellow-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-yellow-600 transition ${
-              status === "delivered" ? "cursor-not-allowed" : ""
+              status === "delivered" || status === "cancelled"
+                ? "cursor-not-allowed"
+                : ""
             }`}
-            disabled={status === "delivered"} // Disable if order is delivered
+            disabled={status === "delivered" || status === "cancelled"} // Disable if order is delivered or cancelled
           >
             <svg
               className="w-5 h-5 mr-1"
@@ -302,7 +368,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) =>
               ></path>
             </svg>
             Choose Payment
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -384,16 +450,22 @@ const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) =>
             {paymentMethod === "cash-bank" && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-gray-700 mb-1">Cash Amount</label>
+                  <label className="block text-gray-700 mb-1">
+                    Cash Amount
+                  </label>
                   <input
                     type="number"
                     value={cashAmount}
-                    onChange={(e) => handleCashAmountChange(Number(e.target.value))}
+                    onChange={(e) =>
+                      handleCashAmountChange(Number(e.target.value))
+                    }
                     className="border rounded-md p-2 w-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-1">Bank Amount</label>
+                  <label className="block text-gray-700 mb-1">
+                    Bank Amount
+                  </label>
                   <input
                     type="number"
                     value={bankAmount}
@@ -401,6 +473,29 @@ const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) =>
                     className="border rounded-md p-2 w-full text-gray-700 bg-gray-100 cursor-not-allowed"
                   />
                 </div>
+              </div>
+            )}
+
+            {paymentMethod === "credit" && (
+              <div className="mt-4">
+                <label className="block text-gray-700 mb-1">
+                  Select Credit User
+                </label>
+                <ReactSelect
+                  options={creditCardUsers.map((user) => ({
+                    value: user.id,
+                    label: user.username,
+                  }))}
+                  onChange={(selectedOption) =>
+                    setSelectedCreditUser(
+                      creditCardUsers.find(
+                        (user) => user.id === selectedOption.value
+                      ) || null
+                    )
+                  }
+                  placeholder="Search for a credit user..."
+                  isSearchable
+                />
               </div>
             )}
 

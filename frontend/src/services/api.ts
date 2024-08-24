@@ -105,6 +105,26 @@ export const updateOrderStatus = async (
   return response.data;
 };
 
+// New function to update order status with additional data
+export const updateOrderStatusNew = async (
+  orderId: number,
+  status: Order["status"],
+  additionalData: Partial<Order> = {}
+): Promise<Order> => {
+  const response = await api.patch<Order>(
+    `/order-status/${orderId}/`,
+    {
+      status,
+      ...additionalData,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  return response.data;
+};
 export const deleteOrder = async (orderId: number) => {
   const response = await api.delete<Order>(`/orders/${orderId}/`);
   return response.data;
@@ -196,3 +216,5 @@ export const fetchActiveCreditUsers = async () => {
   const response = await api.get(`/credit-users/get_active_users/`);
   return response.data.data;
 };
+
+
