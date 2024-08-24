@@ -19,15 +19,13 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   const location = useLocation();
   const [status, setStatus] = useState(order.status);
   const { updateOrderStatus, isLoading: isUpdating } = useUpdateOrderStatus();
-  const [showModal, setShowModal] = useState(
-    location.search.includes("showKitchenBill=true")
-  );
+  const [showModal, setShowModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [billType, setBillType] = useState<"kitchen" | "sales">("sales");
   const [paymentMethod, setPaymentMethod] = useState(order.payment_method || "cash");
-  const [cashAmount, setCashAmount] = useState(0);
-  const [bankAmount, setBankAmount] = useState(0);
+  const [cashAmount, setCashAmount] = useState(order.total_amount / 2);
+  const [bankAmount, setBankAmount] = useState(order.total_amount / 2);
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
 
@@ -37,7 +35,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
 
   const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value as Order["status"];
-    setStatus(newStatus);
 
     if (newStatus === "approved") {
       setBillType("kitchen");
@@ -131,7 +128,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   const handlePaymentMethodChange = (method: string) => {
     setPaymentMethod(method);
     if (method === "cash-bank") {
-      setCashAmount(order.total_amount / 2); // Initial split for demonstration
+      setCashAmount(order.total_amount / 2);
       setBankAmount(order.total_amount / 2);
     } else {
       setCashAmount(order.total_amount);
@@ -140,6 +137,12 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   };
 
   const handleCashAmountChange = (amount: number) => {
+    if (amount < 0) {
+      amount = 0;
+    }
+    if (amount > order.total_amount) {
+      amount = order.total_amount;
+    }
     setCashAmount(amount);
     setBankAmount(order.total_amount - amount);
   };
@@ -162,9 +165,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
 
   return (
     <div key={order.id} className="bg-white p-6 rounded-lg shadow mb-6 border border-gray-200">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-        <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Order #{order.id}</h2>
-        <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-0">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-gray-800">Order #{order.id}</h2>
+        <div className="flex items-center space-x-3">
           <select
             value={status}
             onChange={handleStatusChange}
@@ -179,12 +182,12 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
           </select>
           <button
             onClick={() => setShowAddProductModal(true)}
-            className={`w-full sm:w-auto px-4 py-2 rounded-md flex items-center transition 
-            ${
-              status === "delivered"
-                ? "bg-gray-400 text-gray-200 cursor-not-allowed" // Disabled state styles
-                : "bg-blue-500 text-white hover:bg-blue-600"
-            }`} // Enabled state styles
+            className={`px-4 py-2 rounded-md flex items-center transition 
+    ${
+      status === "delivered"
+        ? "bg-gray-400 text-gray-200 cursor-not-allowed" // Disabled state styles
+        : "bg-blue-500 text-white hover:bg-blue-600"
+    }`} // Enabled state styles
             disabled={status === "delivered"} // Disable button if order is delivered (including order_without_bill)
           >
             <svg
@@ -206,7 +209,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
 
           <button
             onClick={() => setShowPaymentModal(true)}
-            className="w-full sm:w-auto bg-yellow-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-yellow-600 transition"
+            className="bg-yellow-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-yellow-600 transition"
           >
             <svg
               className="w-5 h-5 mr-1"
@@ -242,7 +245,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
 
       {showModal && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
             <h3 className="text-lg font-semibold mb-4 text-gray-800">
               {billType === "kitchen" ? "Kitchen Bill" : "Sales Bill"}
             </h3>
@@ -286,7 +289,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
 
       {showPaymentModal && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
             <h3 className="text-lg font-semibold mb-4 text-gray-800">Choose Payment Method</h3>
             <select
               value={paymentMethod}
