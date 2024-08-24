@@ -93,9 +93,10 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
   }, [addedProducts]);
 
   const handleFinalSubmit = () => {
-    onSubmit(addedProducts);
+    onSubmit(addedProducts); // Pass only the newly added products
     onClose();
   };
+  
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
