@@ -7,4 +7,3 @@ export const useBills = (page: number) => {
     keepPreviousData: true,
   });
 };
-

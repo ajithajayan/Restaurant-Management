@@ -1,9 +1,11 @@
+from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
+from .utils import default_time_period
 
 
 class User(AbstractUser):
@@ -116,6 +118,7 @@ class Order(models.Model):
     customer_name = models.CharField(max_length=100, blank=True)
     address = models.TextField(blank=True)
     customer_phone_number = models.CharField(max_length=12, blank=True)
+    delivery_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     delivery_driver_id = models.IntegerField(null=True, blank=True)
     credit_user_id = models.IntegerField(null=True, blank=True)
 
@@ -392,7 +395,7 @@ class Mess(models.Model):
 class CreditUser(models.Model):
     username = models.CharField(max_length=100)
     last_payment_date = models.DateTimeField(default=timezone.now)
-    time_period = models.DateTimeField(default=timezone.now() + timezone.timedelta(days=30))
+    time_period = models.DateTimeField(default=default_time_period)
     total_due = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True)
 

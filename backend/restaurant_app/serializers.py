@@ -119,7 +119,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "payment_method",
             "address",
             "customer_name",
-            "customer_phone_number",
+            "customer_phone_number",    
+            "delivery_charge",
             "delivery_driver_id",
             "credit_user_id",
         ]
@@ -133,6 +134,10 @@ class OrderSerializer(serializers.ModelSerializer):
         for item_data in items_data:
             order_item = OrderItem.objects.create(order=order, **item_data)
             total_amount += order_item.quantity * order_item.dish.price
+        
+        # Add delivery charge to total amount if it's not the default value
+        if order.delivery_charge != 0:
+            total_amount += order.delivery_charge
 
         order.total_amount = total_amount
         order.save()
@@ -153,6 +158,10 @@ class OrderSerializer(serializers.ModelSerializer):
             for item_data in items_data:
                 order_item = OrderItem.objects.create(order=instance, **item_data)
                 total_amount += order_item.quantity * order_item.dish.price
+        
+        # Add delivery charge to total amount if it's not the default value
+        if instance.delivery_charge != 0:
+            total_amount += instance.delivery_charge
 
         # Update the total amount
         instance.total_amount = total_amount

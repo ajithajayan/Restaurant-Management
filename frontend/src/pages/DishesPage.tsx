@@ -70,6 +70,7 @@ const DishesPage: React.FC = () => {
   const [customerName, setCustomerName] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [customerMobileNumber, setCustomerMobileNumber] = useState("");
+  const [deliveryCharge, setDeliveryCharge] = useState("0.00");
   const [openDriverSelect, setOpenDriverSelect] = useState(false);
   const [error, setError] = useState("");
 
@@ -107,6 +108,10 @@ const DishesPage: React.FC = () => {
   const handleCheckout = () => {
     try {
       if (orderType === "delivery") {
+        if (!customerMobileNumber) {
+          setError("Delivery contact number is required.");
+          return;
+        }
         if (!deliveryAddress) {
           setError("Delivery address is required for delivery orders.");
           return;
@@ -128,6 +133,7 @@ const DishesPage: React.FC = () => {
         address: orderType === "delivery" ? deliveryAddress : "",
         customer_name: orderType === "delivery" ? customerName : "",
         customer_phone_number: orderType === "delivery" ? customerMobileNumber : "",
+        delivery_charge: orderType === "delivery" ? parseFloat(deliveryCharge) : 0,
         delivery_driver_id:
           orderType === "delivery" && selectedDriver ? selectedDriver.id : null,
       };
@@ -324,6 +330,15 @@ const DishesPage: React.FC = () => {
                       value={customerMobileNumber}
                       onChange={(e) => setCustomerMobileNumber(e.target.value)}
                       placeholder="Enter customer contact number"
+                    />
+                  </div>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <Label htmlFor="deliveryCharge">Delivery Charge</Label>
+                    <Input
+                      id="deliveryCharge"
+                      value={deliveryCharge}
+                      onChange={(e) => setDeliveryCharge(e.target.value)}
+                      placeholder="Enter delivery charge"
                     />
                   </div>
                   <div className="mt-4">

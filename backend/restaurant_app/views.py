@@ -111,7 +111,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if order_type:
             queryset = queryset.filter(order_type=order_type)
         return queryset.exclude(status='cancelled')
-    
+
     # Custom action to cancel an order
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def cancel_order(self, request, pk=None):

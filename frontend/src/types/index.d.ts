@@ -71,6 +71,7 @@ export interface OrderFormData {
   customer_name: string;
   address: string;
   customer_phone_number: string;
+  delivery_charge: number;
   delivery_driver_id: number | null;
   credit_user_id?: number | null;
 }
