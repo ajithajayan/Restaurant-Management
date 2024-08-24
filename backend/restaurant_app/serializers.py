@@ -118,6 +118,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "order_type",
             "payment_method",
             "address",
+            "customer_name",
+            "customer_phone_number",
             "delivery_driver_id",
             "credit_user_id",
         ]

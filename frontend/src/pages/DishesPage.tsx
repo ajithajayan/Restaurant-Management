@@ -13,10 +13,8 @@ import {
   Category,
   OrderFormData,
   DeliveryDriver,
-  CreditUser,
 } from "../types";
 import {
-  fetchActiveCreditUsers,
   fetchDeliveryDrivers,
   fetchUnreadCount,
   getCategories,
@@ -42,7 +40,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Loader from "@/components/Layout/Loader";
 
 type OrderType = "dining" | "takeaway" | "delivery";
-type PaymentMethodType = "cash" | "bank" | "cash-bank" | "credit";
 
 type OrderDish = Dish & { quantity: number };
 
@@ -60,41 +57,23 @@ const DishesPage: React.FC = () => {
     fetchDeliveryDrivers
   );
 
-  const [activeCreditUsers, setActiveCreditUsers] = useState<CreditUser[]>([]);
   const [orderItems, setOrderItems] = useState<OrderDish[]>([]);
   const [isOrderVisible, setIsOrderVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [orderType, setOrderType] = useState<OrderType>("dining");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>("cash");
-  const [bankAmount, setBankAmount] = useState("");
-  const [cashAmount, setCashAmount] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDriver, setSelectedDriver] = useState<DeliveryDriver | null>(
     null
   );
-  const [selectedCreditUser, setSelectedCreditUser] =
-    useState<CreditUser | null>(null);
 
+  const [customerName, setCustomerName] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [customerMobileNumber, setCustomerMobileNumber] = useState("");
   const [openDriverSelect, setOpenDriverSelect] = useState(false);
-  const [openCreditUserSelect, setOpenCreditUserSelect] = useState(false);
   const [error, setError] = useState("");
 
   const data = dishes?.results || [];
-
-  useEffect(() => {
-    const loadActiveUsers = async () => {
-      try {
-        const users = await fetchActiveCreditUsers();
-        setActiveCreditUsers(users);
-      } catch (error) {
-        console.error('Failed to load active users:', error);
-      }
-    };
-
-    loadActiveUsers();
-  }, []);
 
   const handleAddDish = (dish: Dish) => {
     addDishToOrder(dish.id, 1);
@@ -146,22 +125,11 @@ const DishesPage: React.FC = () => {
         total_amount: parseFloat(total.toFixed(2)),
         status: "pending",
         order_type: orderType,
-        payment_method: paymentMethod,
-        bank_amount:
-          paymentMethod === "cash-bank"
-            ? parseFloat(bankAmount) || 0
-            : undefined,
-        cash_amount:
-          paymentMethod === "cash-bank"
-            ? parseFloat(cashAmount) || 0
-            : undefined,
         address: orderType === "delivery" ? deliveryAddress : "",
+        customer_name: orderType === "delivery" ? customerName : "",
+        customer_phone_number: orderType === "delivery" ? customerMobileNumber : "",
         delivery_driver_id:
           orderType === "delivery" && selectedDriver ? selectedDriver.id : null,
-        credit_user_id:
-          paymentMethod === "credit" && selectedCreditUser
-            ? selectedCreditUser.id
-            : null,
       };
 
       createOrder(orderData);
@@ -331,6 +299,15 @@ const DishesPage: React.FC = () => {
               </div>
               {orderType === "delivery" && (
                 <>
+                <div className="mt-4 flex flex-col gap-2">
+                    <Label htmlFor="customerName">Customer Name</Label>
+                    <Input
+                      id="customerName"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Enter customer name"
+                    />
+                  </div>
                   <div className="mt-4 flex flex-col gap-2">
                     <Label htmlFor="deliveryAddress">Delivery Address</Label>
                     <Input
@@ -338,6 +315,15 @@ const DishesPage: React.FC = () => {
                       value={deliveryAddress}
                       onChange={(e) => setDeliveryAddress(e.target.value)}
                       placeholder="Enter delivery address"
+                    />
+                  </div>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <Label htmlFor="customerMobileNumber">Customer Number</Label>
+                    <Input
+                      id="customerMobileNumber"
+                      value={customerMobileNumber}
+                      onChange={(e) => setCustomerMobileNumber(e.target.value)}
+                      placeholder="Enter customer contact number"
                     />
                   </div>
                   <div className="mt-4">
@@ -392,107 +378,7 @@ const DishesPage: React.FC = () => {
                   </div>
                 </>
               )}
-              <div className="mt-8 mb-4">
-                <RadioGroup
-                  value={paymentMethod}
-                  onValueChange={(value) =>
-                    setPaymentMethod(value as PaymentMethodType)
-                  }
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="cash" id="cash" />
-                    <Label htmlFor="cash">Cash</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="bank" id="bank" />
-                    <Label htmlFor="bank">Bank</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="cash-bank" id="cash-bank" />
-                    <Label htmlFor="cash-bank">Cash & Bank</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="credit" id="credit" />
-                    <Label htmlFor="credit">Credit</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              {paymentMethod === "cash-bank" && (
-                <div className="flex flex-col gap-2">
-                  <div className="flex w-full max-w-sm items-center gap-1.5">
-                    <Label htmlFor="cash_value">Cash</Label>
-                    <Input
-                      type="text"
-                      id="cash_value"
-                      placeholder="Cash"
-                      value={cashAmount}
-                      onChange={(e) => setCashAmount(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex w-full max-w-sm items-center gap-1.5">
-                    <Label htmlFor="bank_value">Bank</Label>
-                    <Input
-                      type="text"
-                      id="bank_value"
-                      placeholder="Bank"
-                      value={bankAmount}
-                      onChange={(e) => setBankAmount(e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
-              {paymentMethod === "credit" && (
-                <div className="mt-4 flex flex-col gap-2">
-                  <Label>Select Credit User</Label>
-                  <Popover
-                    open={openCreditUserSelect}
-                    onOpenChange={setOpenCreditUserSelect}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openCreditUserSelect}
-                        className="w-full justify-between"
-                      >
-                        {selectedCreditUser
-                          ? selectedCreditUser.username
-                          : "Select user..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
-                      <Command>
-                        <CommandInput placeholder="Search users..." />
-                        <CommandList>
-                          <CommandEmpty>No user found.</CommandEmpty>
-                          <CommandGroup>
-                            {activeCreditUsers?.map((user) => (
-                              <CommandItem
-                                key={user.id}
-                                value={user.username}
-                                onSelect={() => {
-                                  setSelectedCreditUser(user);
-                                  setOpenCreditUserSelect(false);
-                                }}
-                              >
-                                <Check
-                                  className={`mr-2 h-4 w-4 ${
-                                    selectedCreditUser?.id === user.id
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  }`}
-                                />
-                                {user.username}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              )}
+
               {error && (
                 <Alert variant="destructive" className="mt-4">
                   <AlertDescription>{error}</AlertDescription>

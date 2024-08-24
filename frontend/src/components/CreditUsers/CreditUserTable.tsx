@@ -145,7 +145,7 @@ export function CreditUserTable() {
         const amount = parseFloat(row.getValue("total_due"));
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
-          currency: "USD",
+          currency: "QAR",
         }).format(amount);
         return <div className="text-right font-medium">{formatted}</div>;
       },
@@ -178,11 +178,13 @@ export function CreditUserTable() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => handleMakePayment(creditUser.id)}
-              >
-                Make Payment
-              </DropdownMenuItem>
+              {creditUser.total_due > 0 && (
+                <DropdownMenuItem
+                  onClick={() => handleMakePayment(creditUser.id)}
+                >
+                  Make Payment
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={() => handleEditCreditUser(creditUser.id)}
               >

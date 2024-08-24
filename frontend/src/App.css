@@ -33,6 +33,7 @@
 
 .invisible-scrollbar::-webkit-scrollbar {
   width: 4px;
+  height: 4px;
 }
 
 .invisible-scrollbar::-webkit-scrollbar-track {
