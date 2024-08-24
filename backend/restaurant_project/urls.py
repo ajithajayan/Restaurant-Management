@@ -10,6 +10,7 @@ from rest_framework_simplejwt.views import (
 from restaurant_app.views import (
     CategoryViewSet,
     DishViewSet,
+    OrderStatusUpdateViewSet,
     OrderViewSet,
     NotificationViewSet,
     BillViewSet,
@@ -56,6 +57,9 @@ router.register(r"credit-orders", CreditOrderViewSet, basename="credit_orders")
 # Delivery Driver URLs
 router.register(r"delivery-drivers", DeliveryDriverViewSet, basename="delivery_drivers")
 router.register(r"delivery-orders", DeliveryOrderViewSet, basename="delivery_orders")
+
+# for updating the status of the order
+router.register(r'order-status', OrderStatusUpdateViewSet, basename='order-status')
 
 
 urlpatterns = [

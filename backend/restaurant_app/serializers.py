@@ -156,8 +156,65 @@ class OrderSerializer(serializers.ModelSerializer):
         instance.total_amount = total_amount
         instance.save()
         return instance
+    
 
 
+class OrderStatusUpdateSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=Order.STATUS_CHOICES)
+    payment_method = serializers.ChoiceField(choices=Order.PAYMENT_METHOD_CHOICES, required=False)
+    cash_amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    bank_amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    credit_user_id = serializers.IntegerField(required=False)
+
+    def validate(self, data):
+        status = data.get('status')
+        payment_method = data.get('payment_method')
+
+        # If status is "cancelled", skip further validation
+        if status == 'cancelled':
+            return data
+
+        # If status is "delivered", validate the payment method and related fields
+        if status == 'delivered':
+            if not payment_method:
+                raise serializers.ValidationError("Payment method is required when status is 'delivered'.")
+
+            if payment_method == 'cash-bank':
+                if 'cash_amount' not in data or 'bank_amount' not in data:
+                    raise serializers.ValidationError("Both cash_amount and bank_amount are required for cash-bank payment method.")
+                if data['cash_amount'] <= 0 or data['bank_amount'] <= 0:
+                    raise serializers.ValidationError("cash_amount and bank_amount must be greater than 0.")
+
+            if payment_method == 'credit':
+                if 'credit_user_id' not in data:
+                    raise serializers.ValidationError("credit_user_id is required for credit payment method.")
+                try:
+                    credit_user = CreditUser.objects.get(id=data['credit_user_id'])
+                    if not credit_user.is_active:
+                        raise serializers.ValidationError("Selected credit user is not active.")
+                except CreditUser.DoesNotExist:
+                    raise serializers.ValidationError("Invalid credit_user_id.")
+        
+        return data
+
+    def update(self, instance, validated_data):
+        instance.status = validated_data.get('status', instance.status)
+
+        # Only update payment-related fields if the status is "delivered"
+        if instance.status == 'delivered':
+            instance.payment_method = validated_data.get('payment_method', instance.payment_method)
+
+            if instance.payment_method == 'cash-bank':
+                instance.cash_amount = validated_data.get('cash_amount', instance.cash_amount)
+                instance.bank_amount = validated_data.get('bank_amount', instance.bank_amount)
+
+            if instance.payment_method == 'credit':
+                instance.credit_user_id = validated_data.get('credit_user_id', instance.credit_user_id)
+
+        instance.save()
+        return instance
+    
+    
 class BillSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
