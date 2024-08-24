@@ -1,5 +1,6 @@
 import io
 import requests
+from datetime import timedelta
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -9,6 +10,11 @@ from reportlab.platypus import Paragraph, Spacer
 from reportlab.lib.units import inch
 from twilio.rest import Client
 from django.conf import settings
+from django.utils import timezone
+
+
+def default_time_period():
+    return timezone.now() + timedelta(days=30)
 
 
 def generate_order_pdf(order):

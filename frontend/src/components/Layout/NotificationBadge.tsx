@@ -1,34 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { api } from "../../services/api";
+import React from 'react';
+import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
+import { api } from '../../services/api';
 
 interface NotificationBadgeProps {
   className?: string;
 }
 
+const fetchUnreadNotifications = async () => {
+  const response = await api.get("/notifications/unread/");
+  return response.data.length;
+};
+
 const NotificationBadge: React.FC<NotificationBadgeProps> = ({ className = "" }) => {
-  const [unreadCount, setUnreadCount] = useState<number>(0);
   const location = useLocation();
 
-  const fetchUnreadCount = async () => {
-    try {
-      const response = await api.get("/notifications/unread/");
-      setUnreadCount(response.data.length);
-    } catch (error) {
-      console.error("Error fetching unread notifications:", error);
+  const { data: unreadCount = 0 } = useQuery(
+    ['unreadNotifications'], // Cache key
+    fetchUnreadNotifications, // Fetch function
+    {
+      refetchInterval: 30000, // Refetch every 30 seconds
+      staleTime: 60000, // Data considered fresh for 1 minute
+      cacheTime: 300000, // Cache data for 5 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  if (unreadCount === 0) return null;
-
-  if (location.pathname === '/notifications') return null;
+  if (unreadCount === 0 || location.pathname === '/notifications') return null;
 
   return (
     <span className={`bg-red-500 text-white text-xs font-bold rounded-full px-1 ${className}`}>
