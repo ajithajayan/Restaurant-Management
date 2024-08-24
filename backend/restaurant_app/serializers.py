@@ -119,6 +119,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "payment_method",
             "address",
             "delivery_driver_id",
+            "credit_user_id",
         ]
 
     def create(self, validated_data):
@@ -137,25 +138,25 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         items_data = validated_data.pop("items", None)
-        
+
         # Start by resetting the total amount to 0
         total_amount = 0
 
         # Sum existing items' total amount
         for existing_item in instance.items.all():
             total_amount += existing_item.quantity * existing_item.dish.price
-        print("the amount for current items" , total_amount)
+
         # Add new items' total amount
         if items_data:
             for item_data in items_data:
                 order_item = OrderItem.objects.create(order=instance, **item_data)
                 total_amount += order_item.quantity * order_item.dish.price
-                print("the amount for new item", order_item.quantity * order_item.dish.price)
-        print("the amount for new items", total_amount)
+
         # Update the total amount
-        instance.total_amount = total_amount        
+        instance.total_amount = total_amount
         instance.save()
         return instance
+
 
 class BillSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -256,4 +257,26 @@ class MessSerializer(serializers.ModelSerializer):
             "paid_amount",
             "pending_amount",
             "menus",
+        ]
+
+
+class CreditOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CreditOrder
+        fields = ["id", "order"]
+
+
+class CreditUserSerializer(serializers.ModelSerializer):
+    credit_orders = CreditOrderSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = CreditUser
+        fields = [
+            "id",
+            "username",
+            "last_payment_date",
+            "time_period",
+            "total_due",
+            "is_active",
+            "credit_orders",
         ]

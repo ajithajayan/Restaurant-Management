@@ -11,6 +11,7 @@ import {
   DeliveryOrder,
   DeliveryDriver,
   PaginatedResponse,
+  CreditUser,
 } from "../types";
 import store from "@/features/store";
 import { setTokenExpired } from "@/features/slices/authSlice";
@@ -182,4 +183,16 @@ export const updateDeliveryOrderStatus = (orderId: number, status: string) => {
 // Delete delivery status
 export const deleteDeliveryOrder = (orderId: number) => {
   return api.delete(`/delivery-orders/${orderId}/`);
+};
+
+// Fetch Credit Users
+export const fetchCreditUsers = async () => {
+  const response = await api.get<PaginatedResponse<CreditUser>>(`/credit-users/`);
+  return response.data;
+};
+
+// Fetch Active Credit Users
+export const fetchActiveCreditUsers = async () => {
+  const response = await api.get(`/credit-users/get_active_users/`);
+  return response.data.data;
 };

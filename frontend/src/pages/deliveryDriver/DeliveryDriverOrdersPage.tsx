@@ -138,7 +138,6 @@ export const DeliveryDriverOrdersPage: React.FC = () => {
       header: "Status",
       cell: ({ row }) => {
         const [open, setOpen] = React.useState(false);
-        console.log(orders);
 
         return (
           <Popover open={open} onOpenChange={setOpen}>

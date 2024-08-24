@@ -12,7 +12,6 @@ admin.site.register(Floor)
 admin.site.register(Table)
 admin.site.register(Coupon)
 
-
 @admin.register(Menu)
 class MenuAdmin(admin.ModelAdmin):
     list_display = (
@@ -35,7 +34,9 @@ class MenuAdmin(admin.ModelAdmin):
     )
     search_fields = ("name", "day_of_week", "mess_type__name", "created_by")
 
-
 admin.site.register(MenuItem)
 admin.site.register(Mess)
 admin.site.register(MessType)
+
+admin.site.register(CreditUser)
+admin.site.register(CreditOrder)

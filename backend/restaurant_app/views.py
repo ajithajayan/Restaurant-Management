@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters, permissions, status
 from rest_framework.views import APIView
@@ -15,7 +16,6 @@ from django.db.models import Q
 from django.db.models.functions import TruncDate, TruncHour
 from restaurant_app.models import *
 from restaurant_app.serializers import *
-
 
 
 User = get_user_model()
@@ -111,6 +111,40 @@ class OrderViewSet(viewsets.ModelViewSet):
         if order_type:
             queryset = queryset.filter(order_type=order_type)
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        order = serializer.save()
+
+        # Check if the payment method is credit
+        if order.payment_method == "credit":
+            credit_user_id = order.credit_user_id
+            try:
+                credit_user = CreditUser.objects.get(pk=credit_user_id)
+            except CreditUser.DoesNotExist:
+                order.delete()  # Delete the order if the credit user doesn't exist
+                return Response(
+                    {"error": "Invalid credit user"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if not credit_user.is_active:
+                order.delete()  # Delete the order if the credit user is inactive
+                return Response(
+                    {"error": "Credit user account is inactive due to overdue payment"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Create the credit order
+            CreditOrder.objects.create(order=order, credit_user=credit_user)
+            credit_user.add_to_total_due(order.total_amount)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
     def get_queryset_by_time_range(self, time_range):
         end_date = timezone.now()
@@ -303,6 +337,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
 class FloorViewSet(viewsets.ModelViewSet):
     queryset = Floor.objects.all()
     serializer_class = FloorSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -313,6 +348,7 @@ class FloorViewSet(viewsets.ModelViewSet):
 
 class TableViewSet(viewsets.ModelViewSet):
     serializer_class = TableSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         queryset = Table.objects.all()
@@ -325,6 +361,7 @@ class TableViewSet(viewsets.ModelViewSet):
 class CouponViewSet(viewsets.ModelViewSet):
     queryset = Coupon.objects.all()
     serializer_class = CouponSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -458,14 +495,42 @@ class MessViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-
-
-
 class SearchDishesAPIView(APIView):
     def get(self, request):
-        query = request.GET.get('search', '')
+        query = request.GET.get("search", "")
         if query:
             dishes = Dish.objects.filter(name__icontains=query)
             serializer = DishSerializer(dishes, many=True)
-            return Response({'results': serializer.data}, status=status.HTTP_200_OK)
-        return Response({'results': []}, status=status.HTTP_200_OK)
+            return Response({"results": serializer.data}, status=status.HTTP_200_OK)
+        return Response({"results": []}, status=status.HTTP_200_OK)
+
+
+class CreditUserViewSet(viewsets.ModelViewSet):
+    queryset = CreditUser.objects.all()
+    serializer_class = CreditUserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=False, methods=["get"])
+    def get_active_users(self, request, pk=None):
+        active_users = CreditUser.objects.filter(is_active=True)
+        serializer = self.get_serializer(active_users, many=True)
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"])
+    def make_payment(self, request, pk=None):
+        credit_user = self.get_object()
+        amount = Decimal(request.data.get("payment_amount", 0))
+
+        if amount <= 0:
+            return Response(
+                {"error": "Invalid payment amount"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        credit_user.make_payment(amount)
+        return Response(CreditUserSerializer(credit_user).data)
+
+
+class CreditOrderViewSet(viewsets.ModelViewSet):
+    queryset = CreditOrder.objects.all()
+    serializer_class = CreditOrderSerializer
+    permission_classes = [permissions.IsAuthenticated]

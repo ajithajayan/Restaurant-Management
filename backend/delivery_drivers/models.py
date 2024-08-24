@@ -46,26 +46,6 @@ class DeliveryOrder(models.Model):
     def __str__(self):
         return f"Order {self.id} - {self.status}"
 
-    def update_order_status(self):
-        status_mapping = {
-            "pending": "pending",
-            "accepted": "approved",
-            "in_progress": "approved",
-            "delivered": "delivered",
-            "cancelled": "cancelled",
-        }
-        self.order.status = status_mapping.get(self.status, self.order.status)
-        self.order.save()
-
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        old_status = DeliveryOrder.objects.filter(pk=self.pk).values("status").first()
-
-        super().save(*args, **kwargs)
-
-        if is_new or (old_status and old_status["status"] != self.status):
-            self.update_order_status()
-
 
 @receiver(post_save, sender=Order)
 def create_delivery_order(sender, instance, created, **kwargs):
@@ -75,5 +55,4 @@ def create_delivery_order(sender, instance, created, **kwargs):
             driver = DeliveryDriver.objects.filter(
                 id=instance.delivery_driver_id
             ).first()
-            print(f"------------------------- {driver} ------------------------------")
         DeliveryOrder.objects.create(order=instance, driver=driver)
