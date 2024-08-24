@@ -110,7 +110,19 @@ class OrderViewSet(viewsets.ModelViewSet):
         order_type = self.request.query_params.get("order_type", None)
         if order_type:
             queryset = queryset.filter(order_type=order_type)
-        return queryset
+        return queryset.exclude(status='cancelled')
+    
+    # Custom action to cancel an order
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def cancel_order(self, request, pk=None):
+        order = self.get_object()
+        if order.status == 'delivered':
+            return Response({"detail": "Delivered orders cannot be cancelled."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        order.status = 'cancelled'
+        order.save()
+        return Response({"detail": "Order has been cancelled."}, status=status.HTTP_200_OK)
+
 
     def get_queryset_by_time_range(self, time_range):
         end_date = timezone.now()

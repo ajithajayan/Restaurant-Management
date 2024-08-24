@@ -15,9 +15,9 @@ interface OrderCardProps {
   dishes: Dish[];
 }
 
-const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
+const OrderCard: React.FC<OrderCardProps> = ({ order: initialOrder, dishes }) => {
   const location = useLocation();
-  const [status, setStatus] = useState(order.status);
+  const [status, setStatus] = useState(initialOrder.status);
   const { updateOrderStatus, isLoading: isUpdating } = useUpdateOrderStatus();
   const [showModal, setShowModal] = useState(
     location.search.includes("showKitchenBill=true")
@@ -26,29 +26,43 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [billType, setBillType] = useState<"kitchen" | "sales">("sales");
   const [paymentMethod, setPaymentMethod] = useState(
-    order.payment_method || "cash"
+    initialOrder.payment_method || "cash"
   );
   const [cashAmount, setCashAmount] = useState(0);
   const [bankAmount, setBankAmount] = useState(0);
+  const [order, setOrder] = useState<Order>(initialOrder);
+
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
 
-  const newlyAddedItems = location.search.includes("showKitchenBill=true")
-    ? order.items.filter((item) => item.is_new)
-    : order.items;
-
-  const handleStatusChange = async (
-    e: React.ChangeEvent<HTMLSelectElement>
-  ) => {
+  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value as Order["status"];
+  
+    if (!order) {
+      console.error("Order is undefined");
+      return; // Exit if order is undefined
+    }
+  
     setStatus(newStatus);
-
+  
     if (newStatus === "approved") {
       setBillType("kitchen");
       setShowModal(true);
     } else if (newStatus === "delivered") {
-      setBillType("sales");
-      setShowModal(true);
+      Swal.fire({
+        title: "Choose Payment Method",
+        text: "Please select a payment method before confirming the order.",
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "Proceed",
+        cancelButtonText: "Cancel",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          setShowPaymentModal(true);
+        } else {
+          setStatus(order.status); // Revert to previous status if canceled
+        }
+      });
     } else if (newStatus === "order_without_bill") {
       Swal.fire({
         title: "Continue without Bill?",
@@ -64,11 +78,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
           setStatus("delivered");
           setShowAddProductModal(false);
           handlePrint();
-          Swal.fire(
-            "Success!",
-            "The kitchen bill has been printed.",
-            "success"
-          );
+          Swal.fire("Success!", "The kitchen bill has been printed.", "success");
         }
       });
     } else if (newStatus === "cancelled") {
@@ -85,6 +95,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             await updateOrderStatus({ orderId: order.id, status: "cancelled" });
             setStatus("cancelled");
             Swal.fire("Cancelled!", "The order has been cancelled.", "success");
+  
+            // Logic to remove the order from the UI
+            onOrderCancelled(order.id); // Trigger the parent component to remove the order from the list
           } catch (error) {
             Swal.fire(
               "Error",
@@ -92,23 +105,29 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
               "error"
             );
           }
+        } else {
+          setStatus(order.status); // Revert to previous status if canceled
         }
       });
     } else {
-      setStatus(newStatus);
-      updateOrderStatus({ orderId: order.id, status: newStatus });
+      try {
+        await updateOrderStatus({ orderId: order.id, status: newStatus });
+      } catch (error) {
+        setStatus(order.status); // Revert status if update failed
+      }
     }
   };
+  
+  
 
   const handleAddProductSubmit = async (
     products: { dish: Dish; quantity: number }[]
   ) => {
     try {
-      const newTotalAmount =
-        products.reduce(
-          (sum, product) => sum + product.quantity * product.dish.price,
-          0
-        ) + order.total_amount;
+      const newTotalAmount = products.reduce(
+        (sum, product) => sum + product.quantity * product.dish.price,
+        0
+      ) + order.total_amount;
 
       const response = await api.put(`/orders/${order.id}/`, {
         items: products.map((product) => ({
@@ -121,8 +140,12 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
 
       if (response.status === 200) {
         setShowAddProductModal(false);
-        if (status === "approved") {
-          handlePrint();
+
+        // Fetch the updated order data after adding the product
+        const updatedOrderResponse = await api.get(`/orders/${order.id}/`);
+        if (updatedOrderResponse.status === 200) {
+          const updatedOrder = updatedOrderResponse.data;
+          setOrder(updatedOrder);
         }
       }
     } catch (error) {
@@ -144,7 +167,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   const handlePaymentMethodChange = (method: string) => {
     setPaymentMethod(method);
     if (method === "cash-bank") {
-      setCashAmount(order.total_amount / 2); // Initial split for demonstration
+      setCashAmount(order.total_amount / 2);
       setBankAmount(order.total_amount / 2);
     } else {
       setCashAmount(order.total_amount);
@@ -167,9 +190,15 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
 
       if (response.status === 200) {
         setShowPaymentModal(false);
+
+        // Mark the order as delivered after successful payment
+        await updateOrderStatus({ orderId: order.id, status: "delivered" });
+        setStatus("delivered");
+        Swal.fire("Success!", "The order has been marked as delivered.", "success");
       }
     } catch (error) {
       console.error("Failed to update payment method:", error);
+      Swal.fire("Error", "Failed to process the payment.", "error");
     }
   };
 
@@ -211,7 +240,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             value={status}
             onChange={handleStatusChange}
             className="border rounded-md p-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isUpdating}
+            disabled={isUpdating || status === "delivered"} // Disable if order is delivered
           >
             <option value="pending">Pending</option>
             <option value="approved">Kitchen Bill</option>
@@ -223,12 +252,12 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
           <button
             onClick={() => setShowAddProductModal(true)}
             className={`w-full sm:w-auto px-4 py-2 rounded-md flex items-center transition 
-      ${
-        status === "delivered"
-          ? "bg-gray-400 text-gray-200 cursor-not-allowed" // Disabled state styles
-          : "bg-blue-500 text-white hover:bg-blue-600"
-      }`} // Enabled state styles
-            disabled={status === "delivered"} // Disable button if order is delivered (including order_without_bill)
+            ${
+              status === "delivered"
+                ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
+            disabled={status === "delivered"}
           >
             <svg
               className="w-5 h-5 mr-1"
@@ -249,7 +278,10 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
 
           <button
             onClick={() => setShowPaymentModal(true)}
-            className="w-full sm:w-auto bg-yellow-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-yellow-600 transition"
+            className={`w-full sm:w-auto bg-yellow-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-yellow-600 transition ${
+              status === "delivered" ? "cursor-not-allowed" : ""
+            }`}
+            disabled={status === "delivered"} // Disable if order is delivered
           >
             <svg
               className="w-5 h-5 mr-1"
@@ -274,7 +306,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
         Ordered on: {new Date(order.created_at).toLocaleString()}
       </p>
       <div className="space-y-3">
-        {newlyAddedItems.map((item, index) => (
+        {order.items.map((item, index) => (
           <OrderItems key={index} orderItem={item} dishes={dishes} />
         ))}
       </div>
@@ -348,22 +380,16 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             {paymentMethod === "cash-bank" && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-gray-700 mb-1">
-                    Cash Amount
-                  </label>
+                  <label className="block text-gray-700 mb-1">Cash Amount</label>
                   <input
                     type="number"
                     value={cashAmount}
-                    onChange={(e) =>
-                      handleCashAmountChange(Number(e.target.value))
-                    }
+                    onChange={(e) => handleCashAmountChange(Number(e.target.value))}
                     className="border rounded-md p-2 w-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-1">
-                    Bank Amount
-                  </label>
+                  <label className="block text-gray-700 mb-1">Bank Amount</label>
                   <input
                     type="number"
                     value={bankAmount}
@@ -394,10 +420,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
 
       <div className="hidden">
         <div ref={kitchenPrintRef}>
-          <KitchenPrint
-            order={{ ...order, items: newlyAddedItems }}
-            dishes={dishes}
-          />
+          <KitchenPrint order={order} dishes={dishes} />
         </div>
         <div ref={salesPrintRef}>
           <SalesPrint order={order} dishes={dishes} />
