@@ -65,11 +65,12 @@ export interface OrderFormData {
   total_amount: number;
   status: "pending" | "approved" | "cancelled" | "delivered";
   order_type: "dining" | "takeaway" | "delivery";
-  payment_method: "cash" | "bank" | "cash-bank";
+  payment_method: "cash" | "bank" | "cash-bank" | "credit";
   bank_amount?: number;
   cash_amount?: number;
   address: string;
   delivery_driver_id: number | null;
+  credit_user_id: number | null;
 }
 
 // Analytics types
@@ -295,3 +296,15 @@ export type PaginatedResponse<T> = {
   previous: string | null;
   results: T[];
 };
+
+// Credit User
+export type CreditUser = {
+  id: number;
+  username: string;
+}
+
+export type CreditUserForm = {
+  username: string;
+  time_period: Date | null,
+  is_active: boolean,
+}

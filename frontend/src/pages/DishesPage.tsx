@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "react-query";
 import { Check, ChevronsUpDown, CircleCheckBig, Search } from "lucide-react";
@@ -8,8 +8,15 @@ import DishList from "../components/Dishes/DishList";
 import OrderItem from "../components/Orders/OrderItem";
 import { useDishes } from "../hooks/useDishes";
 import { useOrders } from "../hooks/useOrders";
-import { Dish, Category, OrderFormData, DeliveryDriver } from "../types";
 import {
+  Dish,
+  Category,
+  OrderFormData,
+  DeliveryDriver,
+  CreditUser,
+} from "../types";
+import {
+  fetchActiveCreditUsers,
   fetchDeliveryDrivers,
   fetchUnreadCount,
   getCategories,
@@ -35,7 +42,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Loader from "@/components/Layout/Loader";
 
 type OrderType = "dining" | "takeaway" | "delivery";
-type PaymentMethod = "cash" | "bank" | "cash-bank";
+type PaymentMethodType = "cash" | "bank" | "cash-bank" | "credit";
 
 type OrderDish = Dish & { quantity: number };
 
@@ -53,23 +60,41 @@ const DishesPage: React.FC = () => {
     fetchDeliveryDrivers
   );
 
+  const [activeCreditUsers, setActiveCreditUsers] = useState<CreditUser[]>([]);
   const [orderItems, setOrderItems] = useState<OrderDish[]>([]);
   const [isOrderVisible, setIsOrderVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [orderType, setOrderType] = useState<OrderType>("dining");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>("cash");
   const [bankAmount, setBankAmount] = useState("");
   const [cashAmount, setCashAmount] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDriver, setSelectedDriver] = useState<DeliveryDriver | null>(
     null
   );
+  const [selectedCreditUser, setSelectedCreditUser] =
+    useState<CreditUser | null>(null);
+
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [openDriverSelect, setOpenDriverSelect] = useState(false);
+  const [openCreditUserSelect, setOpenCreditUserSelect] = useState(false);
   const [error, setError] = useState("");
 
   const data = dishes?.results || [];
+
+  useEffect(() => {
+    const loadActiveUsers = async () => {
+      try {
+        const users = await fetchActiveCreditUsers();
+        setActiveCreditUsers(users);
+      } catch (error) {
+        console.error('Failed to load active users:', error);
+      }
+    };
+
+    loadActiveUsers();
+  }, []);
 
   const handleAddDish = (dish: Dish) => {
     addDishToOrder(dish.id, 1);
@@ -133,6 +158,10 @@ const DishesPage: React.FC = () => {
         address: orderType === "delivery" ? deliveryAddress : "",
         delivery_driver_id:
           orderType === "delivery" && selectedDriver ? selectedDriver.id : null,
+        credit_user_id:
+          paymentMethod === "credit" && selectedCreditUser
+            ? selectedCreditUser.id
+            : null,
       };
 
       createOrder(orderData);
@@ -302,7 +331,7 @@ const DishesPage: React.FC = () => {
               </div>
               {orderType === "delivery" && (
                 <>
-                  <div className="mt-4">
+                  <div className="mt-4 flex flex-col gap-2">
                     <Label htmlFor="deliveryAddress">Delivery Address</Label>
                     <Input
                       id="deliveryAddress"
@@ -367,7 +396,7 @@ const DishesPage: React.FC = () => {
                 <RadioGroup
                   value={paymentMethod}
                   onValueChange={(value) =>
-                    setPaymentMethod(value as PaymentMethod)
+                    setPaymentMethod(value as PaymentMethodType)
                   }
                 >
                   <div className="flex items-center space-x-2">
@@ -381,6 +410,10 @@ const DishesPage: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="cash-bank" id="cash-bank" />
                     <Label htmlFor="cash-bank">Cash & Bank</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="credit" id="credit" />
+                    <Label htmlFor="credit">Credit</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -406,6 +439,58 @@ const DishesPage: React.FC = () => {
                       onChange={(e) => setBankAmount(e.target.value)}
                     />
                   </div>
+                </div>
+              )}
+              {paymentMethod === "credit" && (
+                <div className="mt-4 flex flex-col gap-2">
+                  <Label>Select Credit User</Label>
+                  <Popover
+                    open={openCreditUserSelect}
+                    onOpenChange={setOpenCreditUserSelect}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openCreditUserSelect}
+                        className="w-full justify-between"
+                      >
+                        {selectedCreditUser
+                          ? selectedCreditUser.username
+                          : "Select user..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Search users..." />
+                        <CommandList>
+                          <CommandEmpty>No user found.</CommandEmpty>
+                          <CommandGroup>
+                            {activeCreditUsers?.map((user) => (
+                              <CommandItem
+                                key={user.id}
+                                value={user.username}
+                                onSelect={() => {
+                                  setSelectedCreditUser(user);
+                                  setOpenCreditUserSelect(false);
+                                }}
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${
+                                    selectedCreditUser?.id === user.id
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  }`}
+                                />
+                                {user.username}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               )}
               {error && (

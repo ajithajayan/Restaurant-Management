@@ -15,6 +15,7 @@ import TokenExpirationModal from "./components/modals/TokenExpirationModal";
 import PasscodeLoginPage from "./pages/PasscodeLoginPage";
 import { DeliveryDriverOrdersPage } from "./pages/deliveryDriver/DeliveryDriverOrdersPage";
 import { DeliveryDriverProfile } from "./pages/deliveryDriver/DeliveryDriverProfile";
+import CreditUsersPage from "./pages/CreditUsersPage";
 
 const queryClient = new QueryClient();
 
@@ -132,6 +133,14 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={["staff", "admin"]}>
                       <SalesReportPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/credit-users"
+                  element={
+                    <ProtectedRoute allowedRoles={["staff", "admin"]}>
+                      <CreditUsersPage />
                     </ProtectedRoute>
                   }
                 />

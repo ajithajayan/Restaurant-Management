@@ -92,6 +92,7 @@ class Order(models.Model):
         ("cash", "Cash"),
         ("bank", "Bank"),
         ("cash-bank", "Cash and Bank"),
+        ("credit", "Credit"),
     ]
 
     user = models.ForeignKey(User, related_name="orders", on_delete=models.CASCADE)
@@ -114,6 +115,7 @@ class Order(models.Model):
     invoice_number = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
     delivery_driver_id = models.IntegerField(null=True, blank=True)
+    credit_user_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ("-created_at",)
@@ -121,7 +123,7 @@ class Order(models.Model):
     def __str__(self):
         return f"{self.id} - {self.created_at} - {self.order_type}"
 
-    def save(self, *args, **kwargs):  # Add on 21-08-2024
+    def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
         if not self.invoice_number:
@@ -338,12 +340,12 @@ def update_menu_sub_total(sender, instance, **kwargs):
 
 
 class Mess(models.Model):
-
     PAYMENT_METHOD_CHOICES = [
         ("cash", "Cash"),
         ("bank", "Bank"),
         ("cash-bank", "Cash and Bank"),
     ]
+
     customer_name = models.CharField(max_length=50, unique=True)
     mobile_number = models.CharField(max_length=15, blank=True)
     start_date = models.DateField()
@@ -383,3 +385,46 @@ class Mess(models.Model):
 
     class Meta:
         unique_together = ("mess_type", "customer_name")
+
+
+class CreditUser(models.Model):
+    username = models.CharField(max_length=100)
+    last_payment_date = models.DateTimeField(default=timezone.now)
+    time_period = models.DateTimeField(default=timezone.now() + timezone.timedelta(days=30))
+    total_due = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("last_payment_date",)
+
+    def __str__(self):
+        return self.username
+
+    def add_to_total_due(self, amount):
+        self.total_due += amount
+        self.save()
+
+    def make_payment(self, amount):
+        if amount > self.total_due:
+            amount = self.total_due
+        self.total_due -= amount
+        self.last_payment_date = timezone.now()
+        self.save()
+
+    def save(self, *args, **kwargs):
+        if self.last_payment_date > self.time_period:
+            self.is_active = False
+        return super().save(*args, **kwargs)
+
+
+class CreditOrder(models.Model):
+    order = models.OneToOneField(Order, on_delete=models.CASCADE)
+    credit_user = models.ForeignKey(
+        CreditUser, on_delete=models.CASCADE, related_name="credit_orders"
+    )
+
+    class Meta:
+        ordering = ("credit_user", "order__created_at")
+
+    def __str__(self):
+        return f"Credit Order for Order {self.order.id}"

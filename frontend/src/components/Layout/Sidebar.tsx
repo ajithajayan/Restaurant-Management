@@ -19,6 +19,7 @@ import {
   UtensilsCrossed,
   ScrollText,
   ArrowRight,
+  Users,
 } from "lucide-react";
 import LogoutBtn from "./LogoutBtn";
 import NotificationBadge from "./NotificationBadge";
@@ -42,6 +43,7 @@ const Sidebar: React.FC = () => {
     { path: "/coupons", icon: Gift, label: "Coupons" },
     { path: "/mess", icon: UtensilsCrossed, label: "Mess" },
     { path: "/salesreport", icon: ScrollText, label: "Salesreport" },
+    { path: "/credit-users", icon: Users, label: "Credit Users" },
     { path: "/settings", icon: Settings, label: "Settings" },
   ];
 
