@@ -101,15 +101,6 @@ export const DeliveryDriverOrdersPage: React.FC = () => {
       header: "Assigned by",
     },
     {
-      accessorKey: "order.total_amount",
-      header: () => <div>Total Amount</div>,
-      cell: ({ row }) => (
-        <div className="capitalize">
-          QAR {row.getValue("order_total_amount")}
-        </div>
-      ),
-    },
-    {
       accessorKey: "order.address",
       header: "Address",
       cell: ({ row }) => (
@@ -197,10 +188,20 @@ export const DeliveryDriverOrdersPage: React.FC = () => {
       },
     },
     {
+      accessorKey: "order.total_amount",
+      header: () => <div>Total Amount</div>,
+      cell: ({ row }) => (
+        <div className="capitalize">
+          QAR <span className="font-semibold">{row.getValue("order_total_amount")}</span>
+        </div>
+      ),
+    },
+    {
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
         const order = row.original;
+        const status = row.getValue("status");
 
         return (
           <DropdownMenu>
@@ -212,12 +213,14 @@ export const DeliveryDriverOrdersPage: React.FC = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => handleDeleteOrder(order.id)}
-                className="text-red-500"
-              >
-                Delete Order
-              </DropdownMenuItem>
+              {status === "cancelled" && (
+                <DropdownMenuItem
+                  onClick={() => handleDeleteOrder(order.id)}
+                  className="text-red-500"
+                >
+                  Delete Order
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );

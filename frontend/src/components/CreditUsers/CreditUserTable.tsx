@@ -178,11 +178,13 @@ export function CreditUserTable() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => handleMakePayment(creditUser.id)}
-              >
-                Make Payment
-              </DropdownMenuItem>
+              {creditUser.total_due > 0 && (
+                <DropdownMenuItem
+                  onClick={() => handleMakePayment(creditUser.id)}
+                >
+                  Make Payment
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={() => handleEditCreditUser(creditUser.id)}
               >
