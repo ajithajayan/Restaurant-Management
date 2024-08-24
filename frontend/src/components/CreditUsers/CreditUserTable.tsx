@@ -145,7 +145,7 @@ export function CreditUserTable() {
         const amount = parseFloat(row.getValue("total_due"));
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
-          currency: "USD",
+          currency: "QAR",
         }).format(amount);
         return <div className="text-right font-medium">{formatted}</div>;
       },

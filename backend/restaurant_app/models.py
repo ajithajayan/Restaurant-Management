@@ -113,7 +113,9 @@ class Order(models.Model):
     )
     bank_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     invoice_number = models.CharField(max_length=20, blank=True)
+    customer_name = models.CharField(max_length=100, blank=True)
     address = models.TextField(blank=True)
+    customer_phone_number = models.CharField(max_length=12, blank=True)
     delivery_driver_id = models.IntegerField(null=True, blank=True)
     credit_user_id = models.IntegerField(null=True, blank=True)
 

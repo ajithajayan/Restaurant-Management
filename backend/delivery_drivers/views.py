@@ -12,7 +12,7 @@ class DeliveryDriverViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user.is_staff:
-            return DeliveryDriver.objects.filter(is_active=True, is_available=True)
+            return DeliveryDriver.objects.filter(is_active=True)
         return DeliveryDriver.objects.filter(user=self.request.user)
 
     @action(detail=True, methods=["patch"])

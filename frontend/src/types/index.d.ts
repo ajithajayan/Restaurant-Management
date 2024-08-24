@@ -65,12 +65,14 @@ export interface OrderFormData {
   total_amount: number;
   status: "pending" | "approved" | "cancelled" | "delivered";
   order_type: "dining" | "takeaway" | "delivery";
-  payment_method: "cash" | "bank" | "cash-bank" | "credit";
+  payment_method?: "cash" | "bank" | "cash-bank" | "credit";
   bank_amount?: number;
   cash_amount?: number;
+  customer_name: string;
   address: string;
+  customer_phone_number: string;
   delivery_driver_id: number | null;
-  credit_user_id: number | null;
+  credit_user_id?: number | null;
 }
 
 // Analytics types

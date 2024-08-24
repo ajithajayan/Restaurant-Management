@@ -101,11 +101,29 @@ export const DeliveryDriverOrdersPage: React.FC = () => {
       header: "Assigned by",
     },
     {
+      accessorKey: "order.customer_name",
+      header: "Customer Name",
+      cell: ({ row }) => (
+        <div className="capitalize max-w-[250px]">
+          {row.getValue("order_customer_name")}
+        </div>
+      ),
+    },
+    {
       accessorKey: "order.address",
       header: "Address",
       cell: ({ row }) => (
         <div className="capitalize max-w-[250px]">
           {row.getValue("order_address")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "order.customer_phone_number",
+      header: "Contact Number",
+      cell: ({ row }) => (
+        <div className="capitalize max-w-[250px]">
+          {row.getValue("order_customer_phone_number")}
         </div>
       ),
     },
