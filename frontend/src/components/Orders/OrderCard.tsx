@@ -25,7 +25,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [billType, setBillType] = useState<"kitchen" | "sales">("sales");
-  const [paymentMethod, setPaymentMethod] = useState(order.payment_method || "cash");
+  const [paymentMethod, setPaymentMethod] = useState(
+    order.payment_method || "cash"
+  );
   const [cashAmount, setCashAmount] = useState(0);
   const [bankAmount, setBankAmount] = useState(0);
   const kitchenPrintRef = useRef(null);
@@ -35,7 +37,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
     ? order.items.filter((item) => item.is_new)
     : order.items;
 
-  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusChange = async (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     const newStatus = e.target.value as Order["status"];
     setStatus(newStatus);
 
@@ -60,7 +64,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
           setStatus("delivered");
           setShowAddProductModal(false);
           handlePrint();
-          Swal.fire("Success!", "The kitchen bill has been printed.", "success");
+          Swal.fire(
+            "Success!",
+            "The kitchen bill has been printed.",
+            "success"
+          );
         }
       });
     } else if (newStatus === "cancelled") {
@@ -78,7 +86,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             setStatus("cancelled");
             Swal.fire("Cancelled!", "The order has been cancelled.", "success");
           } catch (error) {
-            Swal.fire("Error", "There was an error cancelling the order.", "error");
+            Swal.fire(
+              "Error",
+              "There was an error cancelling the order.",
+              "error"
+            );
           }
         }
       });
@@ -92,10 +104,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
     products: { dish: Dish; quantity: number }[]
   ) => {
     try {
-      const newTotalAmount = products.reduce(
-        (sum, product) => sum + product.quantity * product.dish.price,
-        0
-      ) + order.total_amount;
+      const newTotalAmount =
+        products.reduce(
+          (sum, product) => sum + product.quantity * product.dish.price,
+          0
+        ) + order.total_amount;
 
       const response = await api.put(`/orders/${order.id}/`, {
         items: products.map((product) => ({
@@ -161,10 +174,39 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
   };
 
   return (
-    <div key={order.id} className="bg-white p-6 rounded-lg shadow mb-6 border border-gray-200">
+    <div
+      key={order.id}
+      className="bg-white p-6 rounded-lg shadow mb-6 border border-gray-200"
+    >
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-        <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Order #{order.id}</h2>
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
+          Order #{order.id}
+        </h2>
         <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-0">
+          {/* Print Icon for Kitchen and Sales Bills */}
+          {(status === "approved" || status === "delivered") && (
+            <button
+              onClick={handlePrint}
+              className="text-gray-700 hover:text-blue-500 focus:outline-none"
+              title="Print Bill"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 9V2h12v7M6 18h12v5H6v-5zm2-3h8v3H8v-3zM6 11h12v4H6v-4z"
+                ></path>
+              </svg>
+            </button>
+          )}
+
           <select
             value={status}
             onChange={handleStatusChange}
@@ -177,14 +219,15 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             <option value="delivered">Order Success</option>
             <option value="order_without_bill">Order Without Bill</option>
           </select>
+
           <button
             onClick={() => setShowAddProductModal(true)}
             className={`w-full sm:w-auto px-4 py-2 rounded-md flex items-center transition 
-            ${
-              status === "delivered"
-                ? "bg-gray-400 text-gray-200 cursor-not-allowed" // Disabled state styles
-                : "bg-blue-500 text-white hover:bg-blue-600"
-            }`} // Enabled state styles
+      ${
+        status === "delivered"
+          ? "bg-gray-400 text-gray-200 cursor-not-allowed" // Disabled state styles
+          : "bg-blue-500 text-white hover:bg-blue-600"
+      }`} // Enabled state styles
             disabled={status === "delivered"} // Disable button if order is delivered (including order_without_bill)
           >
             <svg
@@ -226,6 +269,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
           </button>
         </div>
       </div>
+
       <p className="text-sm text-gray-500 mb-4">
         Ordered on: {new Date(order.created_at).toLocaleString()}
       </p>
@@ -287,7 +331,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
       {showPaymentModal && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Choose Payment Method</h3>
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">
+              Choose Payment Method
+            </h3>
             <select
               value={paymentMethod}
               onChange={(e) => handlePaymentMethodChange(e.target.value)}
@@ -302,16 +348,22 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, dishes }) => {
             {paymentMethod === "cash-bank" && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-gray-700 mb-1">Cash Amount</label>
+                  <label className="block text-gray-700 mb-1">
+                    Cash Amount
+                  </label>
                   <input
                     type="number"
                     value={cashAmount}
-                    onChange={(e) => handleCashAmountChange(Number(e.target.value))}
+                    onChange={(e) =>
+                      handleCashAmountChange(Number(e.target.value))
+                    }
                     className="border rounded-md p-2 w-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-1">Bank Amount</label>
+                  <label className="block text-gray-700 mb-1">
+                    Bank Amount
+                  </label>
                   <input
                     type="number"
                     value={bankAmount}
