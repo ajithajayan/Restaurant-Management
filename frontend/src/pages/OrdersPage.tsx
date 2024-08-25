@@ -17,8 +17,7 @@ const OrdersPage: React.FC = () => {
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [showActionButton, setShowActionButton] = useState<boolean>(false);
-  const [isStatusUpdated, setIsStatusUpdated] = useState<boolean>(false);
-  const [printType, setPrintType] = useState<"kitchen" | "sales" | null>(null); // Use null as the initial state
+  const [printType, setPrintType] = useState<"kitchen" | "sales" | null>(null);
 
   const {
     data: orders,
@@ -52,17 +51,6 @@ const OrdersPage: React.FC = () => {
     }
   }, [searchQuery, orders]);
 
-  useEffect(() => {
-    if (isStatusUpdated) {
-      const timer = setTimeout(() => {
-        refetchOrders();
-        setIsStatusUpdated(false);
-      }, 2000); // 2 seconds delay
-
-      return () => clearTimeout(timer); // Clear timeout if component unmounts or effect re-runs
-    }
-  }, [isStatusUpdated, refetchOrders]);
-
   const handleSearch = () => {
     if (orders && searchQuery) {
       const filtered = orders.results.filter((order: any) =>
@@ -91,7 +79,6 @@ const OrdersPage: React.FC = () => {
       );
       setPrintType("kitchen");
       triggerPrint();
-      setIsStatusUpdated(true);
     } catch (error) {
       console.error("Error generating kitchen bills:", error);
     }
@@ -106,7 +93,6 @@ const OrdersPage: React.FC = () => {
       );
       setPrintType("sales");
       triggerPrint();
-      setIsStatusUpdated(true);
     } catch (error) {
       console.error("Error printing sales bills:", error);
     }
@@ -136,6 +122,9 @@ const OrdersPage: React.FC = () => {
 
         setSelectedOrders([]);
         setShowActionButton(false);
+
+        // Forcefully refresh the page after printing
+        window.location.reload();
       }, 1000);
     }
   };
@@ -222,8 +211,7 @@ const OrdersPage: React.FC = () => {
               dishes={dishes.results}
               selectedOrders={selectedOrders}
               onOrderSelection={setSelectedOrders}
-              printType={printType} // Pass printType to OrderCard
-              printRef={(el) => (printRefs.current[index] = el!)} // Pass ref to OrderCard
+              onStatusUpdated={refetchOrders}  // Pass the refetchOrders callback to OrderCard
             />
           ))}
           <PaginationControls

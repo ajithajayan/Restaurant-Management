@@ -19,6 +19,7 @@ interface OrderCardProps {
   dishes: Dish[];
   selectedOrders: number[];
   onOrderSelection: (selectedOrderIds: number[]) => void;
+  onStatusUpdated: () => void; // Callback to refresh orders
 }
 
 const OrderCard: React.FC<OrderCardProps> = ({
@@ -26,13 +27,14 @@ const OrderCard: React.FC<OrderCardProps> = ({
   dishes,
   selectedOrders,
   onOrderSelection,
+  onStatusUpdated, // Callback to refresh orders
 }) => {
   const [status, setStatus] = useState(initialOrder.status);
   const { updateOrderStatus, isLoading: isUpdating } = useUpdateOrderStatus();
   const [showModal, setShowModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [billType, setBillType] = useState<"kitchen" | "sales">("sales");
+  const [billType, setBillType] = useState<"kitchen" | "sales">("kitchen");
   const [paymentMethod, setPaymentMethod] = useState(
     initialOrder.payment_method || "cash"
   );
@@ -75,6 +77,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
       setShowModal(true);
       try {
         await updateOrderStatusNew(order.id, "approved");
+        onStatusUpdated(); // Refresh orders after status change
       } catch (error) {
         console.error("Error updating status to approved:", error);
         Swal.fire("Error", "Failed to update status to approved.", "error");
@@ -115,6 +118,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
               "The kitchen bill has been printed.",
               "success"
             );
+            onStatusUpdated(); // Refresh orders after status change
           } catch (error) {
             console.error("Error updating status to delivered:", error);
             Swal.fire(
@@ -139,6 +143,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
             await updateOrderStatusNew(order.id, "cancelled");
             setStatus("cancelled");
             Swal.fire("Cancelled!", "The order has been cancelled.", "success");
+            onStatusUpdated(); // Refresh orders after status change
           } catch (error) {
             console.error("Error cancelling order:", error);
             Swal.fire(
@@ -154,6 +159,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
     } else {
       try {
         await updateOrderStatusNew(order.id, newStatus);
+        onStatusUpdated(); // Refresh orders after status change
       } catch (error) {
         console.error("Error updating status:", error);
         setStatus(order.status); // Revert status if update failed
@@ -202,6 +208,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
           const updatedOrder = updatedOrderResponse.data;
           setOrder(updatedOrder);
         }
+        onStatusUpdated(); // Refresh orders after adding product
       }
     } catch (error) {
       console.error("Failed to add products to the order:", error);
@@ -217,6 +224,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
     handlePrint();
     setShowModal(false);
     updateOrderStatus({ orderId: order.id, status });
+    onStatusUpdated(); // Refresh orders after status change
   };
 
   const handlePaymentMethodChange = (method: string) => {
@@ -266,6 +274,9 @@ const OrderCard: React.FC<OrderCardProps> = ({
         "The order has been marked as delivered and payment method updated.",
         "success"
       );
+
+      // Trigger the order list refresh after payment submission
+      onStatusUpdated(); // Refresh orders after status change
     } catch (error) {
       console.error("Failed to update payment method and status:", error);
       Swal.fire(
@@ -298,7 +309,14 @@ const OrderCard: React.FC<OrderCardProps> = ({
           {/* Print Icon for Kitchen and Sales Bills */}
           {(status === "approved" || status === "delivered") && (
             <button
-              onClick={handlePrint}
+              onClick={() => {
+                if (status === "approved") {
+                  setBillType("kitchen");
+                } else {
+                  setBillType("sales");
+                }
+                handlePrint();
+              }}
               className="text-gray-700 hover:text-blue-500 focus:outline-none"
               title="Print Bill"
             >
@@ -524,4 +542,3 @@ const OrderCard: React.FC<OrderCardProps> = ({
 };
 
 export default OrderCard;
-
