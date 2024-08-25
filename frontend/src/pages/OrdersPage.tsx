@@ -5,7 +5,7 @@ import { useDishes } from "../hooks/useDishes";
 import { SearchIcon } from "lucide-react";
 import { updateOrderStatusNew } from "@/services/api";
 import KitchenPrint from "../components/Orders/KitchenPrint";
-import SalesPrint from "../components/Orders/SalesPrint";
+import SalesPrint from "../components/Orders/SalesPrint"; // Import SalesPrint component
 
 const OrderCard = lazy(() => import('../components/Orders/OrderCard'));
 const PaginationControls = lazy(() => import('../components/Layout/PaginationControls'));
@@ -32,7 +32,7 @@ const OrdersPage: React.FC = () => {
     isError: dishesError,
   } = useDishes();
 
-  const printRefs = useRef<HTMLDivElement[]>([]);
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (orders) {
@@ -57,7 +57,7 @@ const OrdersPage: React.FC = () => {
         order.id.toString().includes(searchQuery)
       );
       setFilteredOrders(filtered);
-    } else if (orders) {
+    } else {
       setFilteredOrders(orders.results);
     }
   };
@@ -68,6 +68,13 @@ const OrdersPage: React.FC = () => {
       orders.results.filter((order: any) => order.status === status).map((order: any) => order.id)
     );
     setShowActionButton(true);
+
+    // Determine the print type and button action based on the status
+    if (status === "pending") {
+      setPrintType("kitchen");
+    } else if (status === "approved") {
+      setPrintType("sales");
+    }
   };
 
   const handleGenerateKitchenBills = async () => {
@@ -77,8 +84,7 @@ const OrdersPage: React.FC = () => {
           updateOrderStatusNew(orderId, "approved")
         )
       );
-      setPrintType("kitchen");
-      triggerPrint();
+      triggerPrint("kitchen");
     } catch (error) {
       console.error("Error generating kitchen bills:", error);
     }
@@ -91,26 +97,22 @@ const OrdersPage: React.FC = () => {
           updateOrderStatusNew(orderId, "delivered", { payment_method: "cash" })
         )
       );
-      setPrintType("sales");
-      triggerPrint();
+      triggerPrint("sales");
     } catch (error) {
       console.error("Error printing sales bills:", error);
     }
   };
 
-  const triggerPrint = () => {
-    if (!printType || printRefs.current.length === 0) return; // Ensure printType is set
+  const triggerPrint = (type: "kitchen" | "sales") => {
+    if (!type || !printRef.current) return;
 
     const printWindow = window.open("", "PRINT", "height=600,width=800");
 
     if (printWindow) {
       printWindow.document.write("<html><head><title>Print</title>");
+      printWindow.document.write("<style>body { font-family: Arial, sans-serif; padding: 20px; }</style>");
       printWindow.document.write("</head><body>");
-      printRefs.current.forEach((printRef) => {
-        if (printRef) {
-          printWindow.document.write(printRef.innerHTML);
-        }
-      });
+      printWindow.document.write(printRef.current.innerHTML);
       printWindow.document.write("</body></html>");
 
       printWindow.document.close();
@@ -125,7 +127,7 @@ const OrdersPage: React.FC = () => {
 
         // Forcefully refresh the page after printing
         window.location.reload();
-      }, 1000);
+      }, 100);
     }
   };
 
@@ -169,7 +171,7 @@ const OrdersPage: React.FC = () => {
               : "bg-blue-500 text-white hover:bg-blue-600"
           }`}
         >
-          Select Pending Orders
+          Select All Pending Orders
         </button>
         
         <button
@@ -180,7 +182,7 @@ const OrdersPage: React.FC = () => {
               : "bg-yellow-500 text-white hover:bg-yellow-600"
           }`}
         >
-          Show Kitchen Orders
+          Select All Kitchen Orders
         </button>
       </div>
 
@@ -211,7 +213,7 @@ const OrdersPage: React.FC = () => {
               dishes={dishes.results}
               selectedOrders={selectedOrders}
               onOrderSelection={setSelectedOrders}
-              onStatusUpdated={refetchOrders}  // Pass the refetchOrders callback to OrderCard
+              onStatusUpdated={refetchOrders}
             />
           ))}
           <PaginationControls
@@ -224,15 +226,12 @@ const OrdersPage: React.FC = () => {
         <p className="text-gray-600">No orders found for the provided ID.</p>
       )}
 
-      {/* Hidden print areas */}
-      <div style={{ display: "none" }}>
+      {/* Hidden print area */}
+      <div ref={printRef} style={{ display: "none" }}>
         {filteredOrders
           .filter((order: any) => selectedOrders.includes(order.id))
           .map((order: any, index) => (
-            <div
-              key={order.id}
-              ref={(el) => (printRefs.current[index] = el!)}
-            >
+            <div key={order.id} style={{ pageBreakAfter: "always" }}>
               {printType === "kitchen" ? (
                 <KitchenPrint order={order} dishes={dishes.results} />
               ) : (

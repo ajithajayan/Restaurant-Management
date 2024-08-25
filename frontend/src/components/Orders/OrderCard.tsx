@@ -13,6 +13,7 @@ import {
   updateOrderStatusNew,
 } from "../../services/api";
 import ReactSelect from "react-select";
+import PrintConfirmationModal from "./PrintConfirmationModal";
 
 interface OrderCardProps {
   order: Order;
@@ -45,6 +46,8 @@ const OrderCard: React.FC<OrderCardProps> = ({
   const [cashAmount, setCashAmount] = useState(0);
   const [bankAmount, setBankAmount] = useState(0);
   const [order, setOrder] = useState<Order>(initialOrder);
+  const [showPrintConfirmationModal, setShowPrintConfirmationModal] =
+    useState(false); // New state for print confirmation modal
 
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
@@ -87,38 +90,6 @@ const OrderCard: React.FC<OrderCardProps> = ({
           setShowPaymentModal(true);
         } else {
           setStatus(order.status); // Revert to previous status if canceled
-        }
-      });
-    } else if (newStatus === "order_without_bill") {
-      Swal.fire({
-        title: "Continue without Bill?",
-        text: "Do you want to continue without generating a bill?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Yes, continue!",
-        cancelButtonText: "No, go back",
-      }).then(async (result) => {
-        if (result.isConfirmed) {
-          setBillType("kitchen");
-          try {
-            await updateOrderStatusNew(order.id, "delivered");
-            setStatus("delivered");
-            setShowAddProductModal(false);
-            handlePrint();
-            Swal.fire(
-              "Success!",
-              "The kitchen bill has been printed.",
-              "success"
-            );
-            onStatusUpdated(); // Refresh orders after status change
-          } catch (error) {
-            console.error("Error updating status to delivered:", error);
-            Swal.fire(
-              "Error",
-              "Failed to update status to delivered.",
-              "error"
-            );
-          }
         }
       });
     } else if (newStatus === "cancelled") {
@@ -262,11 +233,8 @@ const OrderCard: React.FC<OrderCardProps> = ({
       setStatus("delivered");
       disableAllActions();
 
-      Swal.fire(
-        "Success!",
-        "The order has been marked as delivered and payment method updated.",
-        "success"
-      );
+      // Trigger the print confirmation modal
+      setShowPrintConfirmationModal(true);
 
       // Trigger the order list refresh after payment submission
       onStatusUpdated(); // Refresh orders after status change
@@ -278,6 +246,12 @@ const OrderCard: React.FC<OrderCardProps> = ({
         "error"
       );
     }
+  };
+
+  const handlePrintConfirmation = () => {
+    setBillType("sales");
+    setShowModal(true); // Show the print modal
+    setShowPrintConfirmationModal(false); // Close the print confirmation modal
   };
 
   return (
@@ -300,15 +274,17 @@ const OrderCard: React.FC<OrderCardProps> = ({
 
         <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-0">
           {/* Print Icon for Kitchen and Sales Bills */}
+          {/* Print Icon for Kitchen and Sales Bills */}
           {(status === "approved" || status === "delivered") && (
             <button
               onClick={() => {
                 if (status === "approved") {
                   setBillType("kitchen");
-                } else {
+                  setTimeout(() => handlePrint(), 0); // Ensure billType is updated before printing
+                } else if (status === "delivered") {
                   setBillType("sales");
+                  setTimeout(() => handlePrint(), 0); // Ensure billType is updated before printing
                 }
-                handlePrint();
               }}
               className="text-gray-700 hover:text-blue-500 focus:outline-none"
               title="Print Bill"
@@ -338,11 +314,12 @@ const OrderCard: React.FC<OrderCardProps> = ({
               isUpdating || status === "delivered" || status === "cancelled"
             } // Disable if order is delivered or cancelled
           >
-            <option value="pending">Pending</option>
+            <option value="pending" disabled={status === "approved"}>
+              Pending
+            </option>
             <option value="approved">Kitchen Bill</option>
             <option value="cancelled">Cancelled</option>
             <option value="delivered">Order Success</option>
-            <option value="order_without_bill">Order Without Bill</option>
           </select>
 
           <button
@@ -438,6 +415,13 @@ const OrderCard: React.FC<OrderCardProps> = ({
           onSubmit={handleAddProductSubmit}
         />
       )}
+
+      {/* Add the PrintConfirmationModal */}
+      <PrintConfirmationModal
+        isOpen={showPrintConfirmationModal}
+        onClose={() => setShowPrintConfirmationModal(false)}
+        onPrint={handlePrintConfirmation}
+      />
 
       {/* payment modal for updating payment methods */}
 
