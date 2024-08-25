@@ -23,9 +23,6 @@ const SalesPrint: React.FC<SalesPrintProps> = ({ order, dishes }) => {
 
   return (
     <div className="print-container w-64 p-4 text-sm bg-white border-2 border-dashed rounded-lg mx-auto">
-      <div className="flex justify-center mb-4">
-        <img src="/images/logo.png" alt="Company Logo" className="w-24 h-auto" />
-      </div>
       <h1 className="text-center text-lg font-bold mb-2">Sales Receipt</h1>
       <div className="print-order-id mb-2">Order_id #{order.id}</div>
       <div className="print-date mb-2">Date: {formatDate(order.created_at)}</div>

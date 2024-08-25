@@ -1,36 +1,32 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Swal from "sweetalert2";
-import { Order, Dish, CreditUser } from "../../types";
+import { Order, Dish } from "../../types";
 import OrderItems from "./OrderItems";
 import { useUpdateOrderStatus } from "../../hooks/useUpdateOrderStatus";
 import KitchenPrint from "./KitchenPrint";
 import SalesPrint from "./SalesPrint";
 import { useReactToPrint } from "react-to-print";
-import { useLocation } from "react-router-dom";
 import AddProductModal from "./AddProductModal";
 import { api } from "../../services/api";
 import ReactSelect from "react-select";
-import { updateOrderStatusNew } from "../../services/api";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "../ui/hover-card";
-import { Button } from "../ui/button";
-import { BadgeInfo, Bike, Mail, Phone, User } from "lucide-react";
+  fetchActiveCreditUsers,
+  updateOrderStatusNew,
+} from "../../services/api";
 
 interface OrderCardProps {
   order: Order;
   dishes: Dish[];
-  creditUsers: CreditUser[];
+  selectedOrders: number[];
+  onOrderSelection: (selectedOrderIds: number[]) => void;
 }
 
 const OrderCard: React.FC<OrderCardProps> = ({
   order: initialOrder,
   dishes,
-  creditUsers,
+  selectedOrders,
+  onOrderSelection,
 }) => {
-  const location = useLocation();
   const [status, setStatus] = useState(initialOrder.status);
   const { updateOrderStatus, isLoading: isUpdating } = useUpdateOrderStatus();
   const [showModal, setShowModal] = useState(false);
@@ -46,8 +42,21 @@ const OrderCard: React.FC<OrderCardProps> = ({
 
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
+  const [creditCardUsers, setCreditCardUsers] = useState<CreditUser[]>([]);
   const [selectedCreditUser, setSelectedCreditUser] =
     useState<CreditUser | null>(null);
+
+  useEffect(() => {
+    const loadCreditCardUsers = async () => {
+      try {
+        const users = await fetchActiveCreditUsers();
+        setCreditCardUsers(users);
+      } catch (error) {
+        console.error("Failed to load credit card users:", error);
+      }
+    };
+    loadCreditCardUsers();
+  }, []);
 
   const handleStatusChange = async (
     e: React.ChangeEvent<HTMLSelectElement>
@@ -150,6 +159,14 @@ const OrderCard: React.FC<OrderCardProps> = ({
         setStatus(order.status); // Revert status if update failed
       }
     }
+  };
+
+  const handleOrderSelection = () => {
+    onOrderSelection(
+      selectedOrders.includes(order.id)
+        ? selectedOrders.filter((id) => id !== order.id)
+        : [...selectedOrders, order.id]
+    );
   };
 
   const disableAllActions = () => {
@@ -265,9 +282,18 @@ const OrderCard: React.FC<OrderCardProps> = ({
       className="bg-white p-6 rounded-lg shadow mb-6 border border-gray-200"
     >
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-        <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
-          Order #{order.id}
-        </h2>
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            checked={selectedOrders.includes(order.id)}
+            onChange={handleOrderSelection}
+            className="mr-4 w-6 h-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
+            Order #{order.id}
+          </h2>
+        </div>
+
         <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-0">
           {/* Print Icon for Kitchen and Sales Bills */}
           {(status === "approved" || status === "delivered") && (
@@ -334,32 +360,6 @@ const OrderCard: React.FC<OrderCardProps> = ({
             </svg>
             Add Product
           </button>
-
-          {/* <button
-            onClick={() => setShowPaymentModal(true)}
-            className={`w-full sm:w-auto bg-yellow-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-yellow-600 transition ${
-              status === "delivered" || status === "cancelled"
-                ? "cursor-not-allowed"
-                : ""
-            }`}
-            disabled={status === "delivered" || status === "cancelled"} // Disable if order is delivered or cancelled
-          >
-            <svg
-              className="w-5 h-5 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 12h16M4 6h16M4 18h16"
-              ></path>
-            </svg>
-            Choose Payment
-          </button> */}
         </div>
       </div>
 
@@ -371,70 +371,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
           <OrderItems key={index} orderItem={item} dishes={dishes} />
         ))}
       </div>
-      <div className="mt-4 flex justify-between items-center">
-        {order.order_type === "delivery" && (
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <Button variant="link">
-                <BadgeInfo size={16} className="mr-1" />
-                <span>Delivery Status</span>
-              </Button>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-48 p-4">
-              <div className="space-y-2">
-                {/* Delivery Status */}
-                <div className="flex items-center space-x-2">
-                  {order.delivery_order_status === "pending" ? (
-                    <span className="h-2 w-2 rounded-full bg-yellow-500" />
-                  ) : order.delivery_order_status === "delivered" ? (
-                    <span className="h-2 w-2 rounded-full bg-green-500" />
-                  ) : order.delivery_order_status === "accepted" ||
-                    order.delivery_order_status === "in_progress" ? (
-                    <span className="h-2 w-2 rounded-full bg-indigo-500" />
-                  ) : (
-                    <span className="h-2 w-2 rounded-full bg-red-500" />
-                  )}
-                  <span className="text-sm font-semibold capitalize">
-                    {order.delivery_order_status.replace("_", " ")}
-                  </span>
-                </div>
-
-                {/* Delivery Driver Details */}
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <Bike size={16} className="text-gray-500" />
-                    <span className="text-sm font-medium">
-                      {order.delivery_driver.username}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Phone size={16} className="text-gray-500" />
-                    <span className="text-sm font-medium">
-                      {order.delivery_driver.mobile_number}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Mail size={16} className="text-gray-500" />
-                    <span className="text-sm font-medium">
-                      {order.delivery_driver.email}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Total Amount */}
-                <div className="flex flex-col justify-between items-start pt-2 border-t mt-2">
-                  <div>
-                    <div className="text-sm font-bold">
-                      {order.customer_phone_number}
-                    </div>
-                    <div className="text-sm font-bold">{order.address}</div>
-                  </div>
-                </div>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-        )}
-
+      <div className="mt-4 flex justify-end items-center">
         <span className="text-lg font-semibold text-gray-800">
           Total: QAR {order.total_amount}
         </span>
@@ -539,14 +476,14 @@ const OrderCard: React.FC<OrderCardProps> = ({
                   Select Credit User
                 </label>
                 <ReactSelect
-                  options={creditUsers.map((user) => ({
+                  options={creditCardUsers.map((user) => ({
                     value: user.id,
                     label: user.username,
                   }))}
                   onChange={(selectedOption) =>
                     setSelectedCreditUser(
-                      creditUsers.find(
-                        (user) => user.id === selectedOption?.value
+                      creditCardUsers.find(
+                        (user) => user.id === selectedOption.value
                       ) || null
                     )
                   }
@@ -587,3 +524,4 @@ const OrderCard: React.FC<OrderCardProps> = ({
 };
 
 export default OrderCard;
+
