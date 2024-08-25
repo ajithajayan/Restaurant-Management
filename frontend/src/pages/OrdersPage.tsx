@@ -17,16 +17,17 @@ const OrdersPage: React.FC = () => {
   const [creditUsers, setCreditUsers] = useState<CreditUser[]>([]);
 
   useEffect(() => {
-    const loadCreditCardUsers = async () => {
-      try {
-        const users = await fetchActiveCreditUsers();
-        setCreditUsers(users);
-      } catch (error) {
-        console.error("Failed to load credit card users:", error);
-      }
-    };
     loadCreditCardUsers();
   }, []);
+
+  const loadCreditCardUsers = async () => {
+    try {
+      const users = await fetchActiveCreditUsers();
+      setCreditUsers(users);
+    } catch (error) {
+      console.error("Failed to load credit card users:", error);
+    }
+  };
 
   const {
     data: orders,
@@ -103,6 +104,7 @@ const OrdersPage: React.FC = () => {
               order={order} 
               dishes={dishes.results} 
               creditUsers={creditUsers}
+              onCreditUserChange={loadCreditCardUsers}
             />
           ))}
           <PaginationControls

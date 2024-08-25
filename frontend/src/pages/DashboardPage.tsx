@@ -50,7 +50,7 @@ const COLORS = [
   "#FFBB28",
   "#FF8042",
   "#8884D8",
-  "#0088AA",
+  "#6f42c1",
 ];
 
 const RestaurantDashboard: React.FC = () => {
@@ -203,7 +203,7 @@ const RestaurantDashboard: React.FC = () => {
                     cy="50%"
                     labelLine={false}
                     outerRadius={80}
-                    fill="#8884d8"
+                    fill="#6f42c1"
                     dataKey="value"
                     label={({ dish__category__name, percent }) =>
                       `${dish__category__name} ${(percent * 100).toFixed(0)}%`
@@ -212,7 +212,7 @@ const RestaurantDashboard: React.FC = () => {
                     {categorySales.map((index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={COLORS[index.value % COLORS.length]}
+                        fill={COLORS[index.value]}
                       />
                     ))}
                   </Pie>

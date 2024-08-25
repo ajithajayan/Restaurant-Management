@@ -5,12 +5,12 @@ export const DeliveryDriverHeader = () => {
     <header className="w-full flex gap-2 justify-between items-center">
       <div className="flex items-center">
         <img
-          src="/images/logo.png"
+          src="/images/nasscript_full_banner_logo.png"
           alt="Logo"
           className="hidden sm:block h-8 w-auto"
         />
         <img
-          src="/images/nasscript_company_logo.jpg"
+          src="/images/nasscript_logo.png"
           alt="Logo"
           className="block sm:hidden h-16 w-auto"
         />

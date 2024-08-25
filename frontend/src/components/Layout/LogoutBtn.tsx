@@ -51,12 +51,7 @@ const LogoutBtn: React.FC = () => {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleLogout}
-            className="hover:bg-white border hover:border-gray-200 hover:text-red-500"
-          >
-            Logout
-          </AlertDialogAction>
+          <AlertDialogAction onClick={handleLogout}>Logout</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
