@@ -65,7 +65,7 @@ const PasscodeLoginPage = () => {
   return (
     <div className="container mx-auto flex flex-col items-center justify-center min-h-screen">
       <img
-        src="/images/logo.png"
+        src="/images/nasscript_full_banner_logo.png"
         alt="Logo"
         className="align-middle h-auto w-[150px] mb-5"
       />
