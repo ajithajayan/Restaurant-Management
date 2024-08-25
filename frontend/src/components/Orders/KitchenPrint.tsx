@@ -25,13 +25,26 @@ const KitchenPrint: React.FC<KitchenPrintProps> = ({ order, dishes }) => {
       <div className="print-order-id mb-2">Order_id #{order.id}</div>
       <div className="print-date mb-2">Date: {formatDate(order.created_at)}</div>
       <div className="print-time mb-2">Time: {formatTime(order.created_at)}</div>
+      
       <div className="print-items">
         {order.items.map((item, index) => {
           const dish = dishes.find(dish => dish.id === item.dish);
           return (
-            <div key={index} className="print-item flex justify-between mb-1">
-              <span className="print-item-name">{dish ? dish.name : 'Unknown Dish'}</span>
-              <span className="print-item-quantity">{item.quantity}x</span>
+            <div
+              key={index}
+              className={`print-item flex justify-between mb-1 ${
+                item.is_newly_added ? "text-green-600 font-bold" : ""
+              }`}
+            >
+              <span className="print-item-name">
+                {dish ? dish.name : 'Unknown Dish'}
+              </span>
+              <span className="print-item-quantity">
+                {item.quantity}x
+              </span>
+              {item.is_newly_added && (
+                <span className="text-xs text-green-600 ml-2">New</span>
+              )}
             </div>
           );
         })}

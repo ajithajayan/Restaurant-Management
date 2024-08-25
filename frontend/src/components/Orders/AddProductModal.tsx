@@ -93,9 +93,17 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
   }, [addedProducts]);
 
   const handleFinalSubmit = () => {
-    onSubmit(addedProducts); // Pass only the newly added products
+    // Map added products with is_newly_added set to true
+    const productsToSubmit = addedProducts.map(product => ({
+      dish: product.dish,
+      quantity: product.quantity,
+      is_newly_added: true  // Marking as newly added
+    }));
+  
+    onSubmit(productsToSubmit);  // Pass only the newly added products
     onClose();
   };
+  
   
 
   return (

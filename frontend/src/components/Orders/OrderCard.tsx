@@ -1,33 +1,37 @@
 import React, { useState, useRef, useEffect } from "react";
 import Swal from "sweetalert2";
-import { Order, Dish } from "../../types";
+import { Order, Dish, CreditUser } from "../../types";
 import OrderItems from "./OrderItems";
 import { useUpdateOrderStatus } from "../../hooks/useUpdateOrderStatus";
 import KitchenPrint from "./KitchenPrint";
 import SalesPrint from "./SalesPrint";
 import { useReactToPrint } from "react-to-print";
 import AddProductModal from "./AddProductModal";
-import { api } from "../../services/api";
-import ReactSelect from "react-select";
 import {
+  api,
   fetchActiveCreditUsers,
   updateOrderStatusNew,
 } from "../../services/api";
+import ReactSelect from "react-select";
 
 interface OrderCardProps {
   order: Order;
   dishes: Dish[];
+  creditUsers: CreditUser[];
+  onCreditUserChange: () => void;
   selectedOrders: number[];
   onOrderSelection: (selectedOrderIds: number[]) => void;
-  onStatusUpdated: () => void; // Callback to refresh orders
+  onStatusUpdated: () => void;
 }
 
 const OrderCard: React.FC<OrderCardProps> = ({
   order: initialOrder,
   dishes,
+  creditUsers,
   selectedOrders,
   onOrderSelection,
   onStatusUpdated, // Callback to refresh orders
+  onCreditUserChange,
 }) => {
   const [status, setStatus] = useState(initialOrder.status);
   const { updateOrderStatus, isLoading: isUpdating } = useUpdateOrderStatus();
@@ -47,18 +51,6 @@ const OrderCard: React.FC<OrderCardProps> = ({
   const [creditCardUsers, setCreditCardUsers] = useState<CreditUser[]>([]);
   const [selectedCreditUser, setSelectedCreditUser] =
     useState<CreditUser | null>(null);
-
-  useEffect(() => {
-    const loadCreditCardUsers = async () => {
-      try {
-        const users = await fetchActiveCreditUsers();
-        setCreditCardUsers(users);
-      } catch (error) {
-        console.error("Failed to load credit card users:", error);
-      }
-    };
-    loadCreditCardUsers();
-  }, []);
 
   const handleStatusChange = async (
     e: React.ChangeEvent<HTMLSelectElement>
@@ -195,6 +187,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
           dish: product.dish.id,
           quantity: product.quantity,
           total_amount: product.quantity * product.dish.price,
+          is_newly_added: true, // Mark as newly added
         })),
         total_amount: parseFloat(newTotalAmount).toFixed(2),
       });
@@ -386,9 +379,15 @@ const OrderCard: React.FC<OrderCardProps> = ({
       </p>
       <div className="space-y-3">
         {order.items.map((item, index) => (
-          <OrderItems key={index} orderItem={item} dishes={dishes} />
+          <OrderItems
+            key={index}
+            orderItem={item}
+            dishes={dishes}
+            isNewlyAdded={item.is_newly_added} // Pass the newly added status
+          />
         ))}
       </div>
+
       <div className="mt-4 flex justify-end items-center">
         <span className="text-lg font-semibold text-gray-800">
           Total: QAR {order.total_amount}
