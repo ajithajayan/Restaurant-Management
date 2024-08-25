@@ -4,7 +4,9 @@ from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth import get_user_model
+from delivery_drivers.models import DeliveryDriver
 from restaurant_app.models import *
+
 
 
 User = get_user_model()
@@ -28,6 +30,16 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
+
+
+class DriverSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+    mobile_number = serializers.CharField(source="user.mobile_number", read_only=True)
+
+    class Meta:
+        model = DeliveryDriver
+        fields = ["id", "username", "email", "mobile_number", "is_active", "is_available"]
 
 
 class LoginSerializer(TokenObtainPairSerializer):
@@ -102,6 +114,7 @@ class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
     user = UserSerializer(read_only=True)
     delivery_order_status = serializers.CharField(source="delivery_order.status", read_only=True)
+    delivery_driver = DriverSerializer(source='delivery_order.driver', read_only=True)
 
     class Meta:
         model = Order
@@ -123,6 +136,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "customer_phone_number",    
             "delivery_charge",
             "delivery_driver_id",
+            "delivery_driver",
             "credit_user_id",
             "delivery_order_status",
         ]
@@ -170,7 +184,6 @@ class OrderSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
     
-
 
 class OrderStatusUpdateSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=Order.STATUS_CHOICES)
