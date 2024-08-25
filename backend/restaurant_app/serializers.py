@@ -101,6 +101,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
     user = UserSerializer(read_only=True)
+    delivery_order_status = serializers.CharField(source="delivery_order.status", read_only=True)
 
     class Meta:
         model = Order
@@ -123,6 +124,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "delivery_charge",
             "delivery_driver_id",
             "credit_user_id",
+            "delivery_order_status",
         ]
 
     def create(self, validated_data):

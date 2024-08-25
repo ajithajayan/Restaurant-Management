@@ -26,6 +26,7 @@ export interface Order {
   bill_generated: boolean;
   items: OrderItem[];
   order_type: "dining" | "takeaway" | "delivery";
+  delivery_order_status: "pending" | "accepted" | "in_progress" | "delivered" | "cancelled",
 }
 
 export interface Bill {

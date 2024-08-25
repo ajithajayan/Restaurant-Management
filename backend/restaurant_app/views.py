@@ -100,7 +100,6 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["request"] = self.request
@@ -113,7 +112,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(order_type=order_type)
         return queryset.exclude(status='cancelled')
 
-    # Custom action to cancel an order
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def cancel_order(self, request, pk=None):
         order = self.get_object()
@@ -124,40 +122,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.save()
         return Response({"detail": "Order has been cancelled."}, status=status.HTTP_200_OK)
 
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         order = serializer.save()
-
-        # Check if the payment method is credit
-        if order.payment_method == "credit":
-            credit_user_id = order.credit_user_id
-            try:
-                credit_user = CreditUser.objects.get(pk=credit_user_id)
-            except CreditUser.DoesNotExist:
-                order.delete()  # Delete the order if the credit user doesn't exist
-                return Response(
-                    {"error": "Invalid credit user"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            if not credit_user.is_active:
-                order.delete()  # Delete the order if the credit user is inactive
-                return Response(
-                    {"error": "Credit user account is inactive due to overdue payment"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            # Create the credit order
-            CreditOrder.objects.create(order=order, credit_user=credit_user)
-            credit_user.add_to_total_due(order.total_amount)
-
         headers = self.get_success_headers(serializer.data)
-        return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
-        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_queryset_by_time_range(self, time_range):
         end_date = timezone.now()
@@ -322,6 +292,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(trends)
 
 
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from .models import Order, CreditUser, CreditOrder
+
 class OrderStatusUpdateViewSet(viewsets.GenericViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderStatusUpdateSerializer
@@ -334,7 +308,29 @@ class OrderStatusUpdateViewSet(viewsets.GenericViewSet):
 
         serializer = self.get_serializer(order, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_order = serializer.save()
+
+            # Check if the payment method is credit
+            if updated_order.payment_method == "credit":
+                credit_user_id = updated_order.credit_user_id
+                try:
+                    credit_user = CreditUser.objects.get(pk=credit_user_id)
+                except CreditUser.DoesNotExist:
+                    return Response(
+                        {"error": "Invalid credit user"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                if not credit_user.is_active:
+                    return Response(
+                        {"error": "Credit user account is inactive due to overdue payment"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Create the credit order if it doesn't exist
+                CreditOrder.objects.get_or_create(order=updated_order, credit_user=credit_user)
+                credit_user.add_to_total_due(updated_order.total_amount)
+
             return Response({"detail": "Order updated successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
