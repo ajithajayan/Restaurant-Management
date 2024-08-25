@@ -1,9 +1,8 @@
 from rest_framework.routers import DefaultRouter
-from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
-
+from restaurant_app.admin import admin_site
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
@@ -63,7 +62,7 @@ router.register(r'order-status', OrderStatusUpdateViewSet, basename='order-statu
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("admin/", admin_site.urls),
     path("api/", include(router.urls)),
     path("api/login-passcode/", PasscodeLoginView.as_view(), name="login-passcode"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
