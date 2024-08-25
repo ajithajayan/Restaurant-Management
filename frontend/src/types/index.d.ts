@@ -27,6 +27,13 @@ export interface Order {
   items: OrderItem[];
   order_type: "dining" | "takeaway" | "delivery";
   delivery_order_status: "pending" | "accepted" | "in_progress" | "delivered" | "cancelled",
+  delivery_driver: {
+    username: string;
+    mobile_number: number;
+    email: string;
+  };
+  customer_phone_number: number;
+  address: string;
 }
 
 export interface Bill {

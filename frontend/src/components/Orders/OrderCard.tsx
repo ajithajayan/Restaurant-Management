@@ -10,16 +10,14 @@ import { useLocation } from "react-router-dom";
 import AddProductModal from "./AddProductModal";
 import { api } from "../../services/api";
 import ReactSelect from "react-select";
-import {
-  updateOrderStatusNew,
-} from "../../services/api";
+import { updateOrderStatusNew } from "../../services/api";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "../ui/hover-card";
 import { Button } from "../ui/button";
-import { BadgeInfo } from "lucide-react";
+import { BadgeInfo, Bike, Mail, Phone, User } from "lucide-react";
 
 interface OrderCardProps {
   order: Order;
@@ -377,24 +375,60 @@ const OrderCard: React.FC<OrderCardProps> = ({
         {order.order_type === "delivery" && (
           <HoverCard>
             <HoverCardTrigger asChild>
-              <Button variant="link"><BadgeInfo size={16} className="mr-1" /><span>Delivery Status</span></Button>
+              <Button variant="link">
+                <BadgeInfo size={16} className="mr-1" />
+                <span>Delivery Status</span>
+              </Button>
             </HoverCardTrigger>
-            <HoverCardContent className="w-32">
-              <div className="relative flex justify-between space-x-4">
-                <div className="space-y-1 flex gap-2 items-center">
+            <HoverCardContent className="w-48 p-4">
+              <div className="space-y-2">
+                {/* Delivery Status */}
+                <div className="flex items-center space-x-2">
                   {order.delivery_order_status === "pending" ? (
-                    <span className="flex h-2 w-2 translate-y-1 rounded-full bg-yellow-500" />
+                    <span className="h-2 w-2 rounded-full bg-yellow-500" />
                   ) : order.delivery_order_status === "delivered" ? (
-                    <span className="flex h-2 w-2 translate-y-1 rounded-full bg-green-500" />
+                    <span className="h-2 w-2 rounded-full bg-green-500" />
                   ) : order.delivery_order_status === "accepted" ||
                     order.delivery_order_status === "in_progress" ? (
-                    <span className="flex h-2 w-2 translate-y-1 rounded-full bg-indigo-500" />
+                    <span className="h-2 w-2 rounded-full bg-indigo-500" />
                   ) : (
-                    <span className="flex h-2 w-2 translate-y-1 rounded-full bg-red-500" />
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
                   )}
-                  <h4 className="relative right-0 text-sm font-semibold">
-                    {order.delivery_order_status}
-                  </h4>
+                  <span className="text-sm font-semibold capitalize">
+                    {order.delivery_order_status.replace("_", " ")}
+                  </span>
+                </div>
+
+                {/* Delivery Driver Details */}
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <Bike size={16} className="text-gray-500" />
+                    <span className="text-sm font-medium">
+                      {order.delivery_driver.username}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Phone size={16} className="text-gray-500" />
+                    <span className="text-sm font-medium">
+                      {order.delivery_driver.mobile_number}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Mail size={16} className="text-gray-500" />
+                    <span className="text-sm font-medium">
+                      {order.delivery_driver.email}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Total Amount */}
+                <div className="flex flex-col justify-between items-start pt-2 border-t mt-2">
+                  <div>
+                    <div className="text-sm font-bold">
+                      {order.customer_phone_number}
+                    </div>
+                    <div className="text-sm font-bold">{order.address}</div>
+                  </div>
                 </div>
               </div>
             </HoverCardContent>
