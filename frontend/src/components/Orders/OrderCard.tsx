@@ -7,7 +7,7 @@ import KitchenPrint from "./KitchenPrint";
 import SalesPrint from "./SalesPrint";
 import { useReactToPrint } from "react-to-print";
 import AddProductModal from "./AddProductModal";
-import { api, fetchActiveCreditUsers, updateOrderStatusNew } from "../../services/api";
+import { api, updateOrderStatusNew } from "../../services/api";
 import ReactSelect from "react-select";
 import {
   HoverCard,
@@ -34,7 +34,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
   creditUsers,
   selectedOrders,
   onOrderSelection,
-  onStatusUpdated, // Callback to refresh orders
+  onStatusUpdated,
   onCreditUserChange,
 }) => {
   const [status, setStatus] = useState(initialOrder.status);
@@ -49,13 +49,12 @@ const OrderCard: React.FC<OrderCardProps> = ({
   const [cashAmount, setCashAmount] = useState(0);
   const [bankAmount, setBankAmount] = useState(0);
   const [order, setOrder] = useState<Order>(initialOrder);
-  const [isCreditUserModalOpen, setIsCreditUserModalOpen] = useState(false);
 
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
-  const [creditCardUsers, setCreditCardUsers] = useState<CreditUser[]>([]);
   const [selectedCreditUser, setSelectedCreditUser] =
     useState<CreditUser | null>(null);
+  const [isCreditUserModalOpen, setIsCreditUserModalOpen] = useState(false);
 
   const handleStatusChange = async (
     e: React.ChangeEvent<HTMLSelectElement>
@@ -284,6 +283,13 @@ const OrderCard: React.FC<OrderCardProps> = ({
     }
   };
 
+  const handleCreditUserCreated = (newCreditUser: CreditUser | undefined) => {
+    if (newCreditUser) {
+      setSelectedCreditUser(newCreditUser);
+    }
+    onCreditUserChange();
+  };
+
   return (
     <div
       key={order.id}
@@ -386,7 +392,69 @@ const OrderCard: React.FC<OrderCardProps> = ({
           <OrderItems key={index} orderItem={item} dishes={dishes} />
         ))}
       </div>
-      <div className="mt-4 flex justify-end items-center">
+      <div className="mt-4 flex justify-between items-center">
+        {order.order_type === "delivery" && (
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Button variant="link">
+                <BadgeInfo size={16} className="mr-1" />
+                <span>Delivery Status</span>
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-48 p-4">
+              <div className="space-y-2">
+                {/* Delivery Status */}
+                <div className="flex items-center space-x-2">
+                  {order.delivery_order_status === "pending" ? (
+                    <span className="h-2 w-2 rounded-full bg-yellow-500" />
+                  ) : order.delivery_order_status === "delivered" ? (
+                    <span className="h-2 w-2 rounded-full bg-green-500" />
+                  ) : order.delivery_order_status === "accepted" ||
+                    order.delivery_order_status === "in_progress" ? (
+                    <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                  ) : (
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                  )}
+                  <span className="text-sm font-semibold capitalize">
+                    {order.delivery_order_status.replace("_", " ")}
+                  </span>
+                </div>
+
+                {/* Delivery Driver Details */}
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <Bike size={16} className="text-gray-500" />
+                    <span className="text-sm font-medium">
+                      {order.delivery_driver.username}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Phone size={16} className="text-gray-500" />
+                    <span className="text-sm font-medium">
+                      {order.delivery_driver.mobile_number}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Mail size={16} className="text-gray-500" />
+                    <span className="text-sm font-medium">
+                      {order.delivery_driver.email}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Total Amount */}
+                <div className="flex flex-col justify-between items-start pt-2 border-t mt-2">
+                  <div>
+                    <div className="text-sm font-bold">
+                      {order.customer_phone_number}
+                    </div>
+                    <div className="text-sm font-bold">{order.address}</div>
+                  </div>
+                </div>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
+        )}
         <span className="text-lg font-semibold text-gray-800">
           Total: QAR {order.total_amount}
         </span>
@@ -491,17 +559,29 @@ const OrderCard: React.FC<OrderCardProps> = ({
                   <label className="block text-gray-700 mb-1">
                     Select Credit User
                   </label>
-                  <PlusCircle size={24} className="cursor-pointer" onClick={() => setIsCreditUserModalOpen(true)} />
+                  <PlusCircle
+                    size={24}
+                    className="cursor-pointer"
+                    onClick={() => setIsCreditUserModalOpen(true)}
+                  />
                 </div>
                 <ReactSelect
-                  options={creditCardUsers.map((user) => ({
+                  options={creditUsers.map((user) => ({
                     value: user.id,
                     label: user.username,
                   }))}
+                  value={
+                    selectedCreditUser
+                      ? {
+                          value: selectedCreditUser.id,
+                          label: selectedCreditUser.username,
+                        }
+                      : null
+                  }
                   onChange={(selectedOption) =>
                     setSelectedCreditUser(
-                      creditCardUsers.find(
-                        (user) => user.id === selectedOption.value
+                      creditUsers.find(
+                        (user) => user.id === selectedOption?.value
                       ) || null
                     )
                   }
@@ -533,7 +613,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
         isOpen={isCreditUserModalOpen}
         onClose={() => setIsCreditUserModalOpen(false)}
         creditUserId={null}
-        onCreditUserChange={onCreditUserChange}
+        onCreditUserChange={handleCreditUserCreated}
       />
 
       <div className="hidden">
