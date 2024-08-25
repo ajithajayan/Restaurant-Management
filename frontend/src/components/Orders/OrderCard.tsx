@@ -164,11 +164,10 @@ const OrderCard: React.FC<OrderCardProps> = ({
     products: { dish: Dish; quantity: number }[]
   ) => {
     try {
-      const newTotalAmount =
-        products.reduce(
-          (sum, product) => sum + product.quantity * product.dish.price,
-          0
-        ) + order.total_amount;
+      const newTotalAmount = products.reduce(
+        (sum, product) => sum + product.quantity * product.dish.price,
+        order.total_amount // Start from the existing total amount
+      );
 
       const response = await api.put(`/orders/${order.id}/`, {
         items: products.map((product) => ({
@@ -176,7 +175,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
           quantity: product.quantity,
           total_amount: product.quantity * product.dish.price,
         })),
-        total_amount: newTotalAmount,
+        total_amount: parseFloat(newTotalAmount).toFixed(2),
       });
 
       if (response.status === 200) {
@@ -452,9 +451,8 @@ const OrderCard: React.FC<OrderCardProps> = ({
         />
       )}
 
-
       {/* payment modal for updating payment methods */}
-      
+
       {showPaymentModal && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
