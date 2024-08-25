@@ -216,5 +216,3 @@ export const fetchActiveCreditUsers = async () => {
   const response = await api.get(`/credit-users/get_active_users/`);
   return response.data.data;
 };
-
-

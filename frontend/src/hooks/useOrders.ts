@@ -9,7 +9,6 @@ export const updateOrderStatusAPI = async (orderId: number, status: string) => {
   return response.data;
 };
 
-
 export const useOrders = (): UseOrdersReturn => {
   const queryClient = useQueryClient();
 

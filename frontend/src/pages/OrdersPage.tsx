@@ -1,8 +1,12 @@
-import React, { lazy, useState, useEffect } from "react";
+import React, { lazy, useState, useEffect, useMemo } from "react";
 import Layout from "../components/Layout/Layout";
 import { usePaginatedOrders } from "../hooks/useOrders";
 import { useDishes } from "../hooks/useDishes";
 import { SearchIcon } from "lucide-react";
+import { debounce } from "lodash";
+import { fetchActiveCreditUsers } from "@/services/api";
+import { CreditUser } from "@/types";
+
 const OrderCard = lazy(() => import('../components/Orders/OrderCard'));
 const PaginationControls = lazy(() => import('../components/Layout/PaginationControls'));
 
@@ -10,6 +14,19 @@ const OrdersPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
+  const [creditUsers, setCreditUsers] = useState<CreditUser[]>([]);
+
+  useEffect(() => {
+    const loadCreditCardUsers = async () => {
+      try {
+        const users = await fetchActiveCreditUsers();
+        setCreditUsers(users);
+      } catch (error) {
+        console.error("Failed to load credit card users:", error);
+      }
+    };
+    loadCreditCardUsers();
+  }, []);
 
   const {
     data: orders,
@@ -29,26 +46,26 @@ const OrdersPage: React.FC = () => {
     }
   }, [orders]);
 
-  useEffect(() => {
-    if (orders && searchQuery) {
-      const filtered = orders.results.filter((order: any) =>
-        order.id.toString().includes(searchQuery)
-      );
-      setFilteredOrders(filtered);
-    } else if (orders) {
-      setFilteredOrders(orders.results);
-    }
-  }, [searchQuery, orders]);
+  const filterOrders = useMemo(() => 
+    debounce((query: string) => {
+      if (orders && query) {
+        const filtered = orders.results.filter((order: any) =>
+          order.id.toString().includes(query)
+        );
+        setFilteredOrders(filtered);
+      } else if (orders) {
+        setFilteredOrders(orders.results);
+      }
+    }, 300)
+  , [orders]);
 
-  const handleSearch = () => {
-    if (orders && searchQuery) {
-      const filtered = orders.results.filter((order: any) =>
-        order.id.toString().includes(searchQuery)
-      );
-      setFilteredOrders(filtered);
-    } else if (orders) {
-      setFilteredOrders(orders.results);
-    }
+  useEffect(() => {
+    filterOrders(searchQuery);
+    return () => filterOrders.cancel();
+  }, [searchQuery, filterOrders]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
   if (ordersLoading || dishesLoading)
@@ -56,7 +73,7 @@ const OrdersPage: React.FC = () => {
 
   if (ordersError || dishesError)
     return (
-      <Layout>Error loading orders or dishes. Please try again later.</Layout>
+      <Layout>Error loading data. Please try again later.</Layout>
     );
 
   if (!dishes || !dishes.results) {
@@ -71,22 +88,22 @@ const OrdersPage: React.FC = () => {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearch}
             placeholder="Search orders by ID..."
             className="border border-gray-300 rounded px-4 py-2"
           />
-          <button
-            onClick={handleSearch}
-            className="text-black rounded p-2"
-          >
-            <SearchIcon />
-          </button>
+          <SearchIcon className="ml-2 text-gray-500" />
         </div>
       </div>
       {filteredOrders.length ? (
         <>
           {filteredOrders.map((order: any) => (
-            <OrderCard key={order.id} order={order} dishes={dishes.results} />
+            <OrderCard 
+              key={order.id} 
+              order={order} 
+              dishes={dishes.results} 
+              creditUsers={creditUsers}
+            />
           ))}
           <PaginationControls
             currentPage={currentPage}

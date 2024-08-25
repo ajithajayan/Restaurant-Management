@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import Swal from "sweetalert2";
 import { Order, Dish, CreditUser } from "../../types";
 import OrderItems from "./OrderItems";
@@ -11,7 +11,6 @@ import AddProductModal from "./AddProductModal";
 import { api } from "../../services/api";
 import ReactSelect from "react-select";
 import {
-  fetchActiveCreditUsers,
   updateOrderStatusNew,
 } from "../../services/api";
 import {
@@ -20,16 +19,18 @@ import {
   HoverCardTrigger,
 } from "../ui/hover-card";
 import { Button } from "../ui/button";
-import { BadgeInfo, InfoIcon } from "lucide-react";
+import { BadgeInfo } from "lucide-react";
 
 interface OrderCardProps {
   order: Order;
   dishes: Dish[];
+  creditUsers: CreditUser[];
 }
 
 const OrderCard: React.FC<OrderCardProps> = ({
   order: initialOrder,
   dishes,
+  creditUsers,
 }) => {
   const location = useLocation();
   const [status, setStatus] = useState(initialOrder.status);
@@ -47,22 +48,8 @@ const OrderCard: React.FC<OrderCardProps> = ({
 
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
-  const [creditCardUsers, setCreditCardUsers] = useState<CreditUser[]>([]);
   const [selectedCreditUser, setSelectedCreditUser] =
     useState<CreditUser | null>(null);
-  const [openCreditUserSelect, setOpenCreditUserSelect] = useState(false);
-
-  useEffect(() => {
-    const loadCreditCardUsers = async () => {
-      try {
-        const users = await fetchActiveCreditUsers();
-        setCreditCardUsers(users);
-      } catch (error) {
-        console.error("Failed to load credit card users:", error);
-      }
-    };
-    loadCreditCardUsers();
-  }, []);
 
   const handleStatusChange = async (
     e: React.ChangeEvent<HTMLSelectElement>
@@ -516,14 +503,14 @@ const OrderCard: React.FC<OrderCardProps> = ({
                   Select Credit User
                 </label>
                 <ReactSelect
-                  options={creditCardUsers.map((user) => ({
+                  options={creditUsers.map((user) => ({
                     value: user.id,
                     label: user.username,
                   }))}
                   onChange={(selectedOption) =>
                     setSelectedCreditUser(
-                      creditCardUsers.find(
-                        (user) => user.id === selectedOption.value
+                      creditUsers.find(
+                        (user) => user.id === selectedOption?.value
                       ) || null
                     )
                   }
