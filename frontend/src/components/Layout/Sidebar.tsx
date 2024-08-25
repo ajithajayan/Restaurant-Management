@@ -83,7 +83,7 @@ const Sidebar: React.FC = () => {
     <div className="w-20 md:w-72 bg-white p-4 h-screen border-r border-gray-300 flex flex-col">
       <Link to="/" className="mb-8 flex justify-center md:justify-start">
         <img src="/images/nasscript_full_banner_logo.png" alt="Logo" className="hidden sm:block h-8 w-auto" />
-        <img src="/images/nasscript_company_logo.jpg" alt="Logo" className="block sm:hidden h-8 w-8" />
+        <img src="/images/nasscript_logo.png" alt="Logo" className="block sm:hidden h-8 w-8" />
       </Link>
       <div className="overflow-y-auto overflow-x-hidden invisible-scrollbar flex flex-col justify-between h-screen">
         <nav className="flex-grow mr-2">
@@ -129,9 +129,9 @@ const Sidebar: React.FC = () => {
           Powered by
         </p>
         <img
-          src="/images/nasscript_company_logo.jpg"
+          src="/images/nasscript_logo.png"
           alt="logo"
-          className="w-8 h-8 md:w-10 md:h-10"
+          className="ml-2 w-5 h-5"
         />
       </a>
     </div>
