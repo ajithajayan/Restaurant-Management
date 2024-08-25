@@ -443,6 +443,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
           </div>
         </div>
       )}
+      {/* add product modal for adding products to the order */}
 
       {showAddProductModal && (
         <AddProductModal
@@ -451,6 +452,9 @@ const OrderCard: React.FC<OrderCardProps> = ({
         />
       )}
 
+
+      {/* payment modal for updating payment methods */}
+      
       {showPaymentModal && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
