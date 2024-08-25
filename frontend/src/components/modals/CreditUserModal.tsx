@@ -19,13 +19,13 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { api } from "@/services/api";
-import { CreditUserForm } from "@/types";
+import { CreditUser, CreditUserForm } from "@/types";
 
 interface CreditUserModalProps {
   isOpen: boolean;
   onClose: () => void;
   creditUserId: number | null;
-  onCreditUserChange: () => void;
+  onCreditUserChange: (newCreditUser?: CreditUser) => void;
 }
 
 export function CreditUserModal({
@@ -92,12 +92,13 @@ export function CreditUserModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let response;
       if (creditUserId) {
-        await api.put(`/credit-users/${creditUserId}/`, creditUser);
+        response = await api.put(`/credit-users/${creditUserId}/`, creditUser);
       } else {
-        await api.post("/credit-users/", creditUser);
+        response = await api.post("/credit-users/", creditUser);
       }
-      onCreditUserChange();
+      onCreditUserChange(response.data);
       onClose();
     } catch (error) {
       console.error("Error saving credit user:", error);
@@ -117,7 +118,7 @@ export function CreditUserModal({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="username" className="text-right">
-                Username
+                Name
               </Label>
               <Input
                 id="username"
