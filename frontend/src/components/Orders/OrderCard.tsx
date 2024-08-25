@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Swal from "sweetalert2";
-import { Order, Dish } from "../../types";
+import { Order, Dish, CreditUser } from "../../types";
 import OrderItems from "./OrderItems";
 import { useUpdateOrderStatus } from "../../hooks/useUpdateOrderStatus";
 import KitchenPrint from "./KitchenPrint";
@@ -14,6 +14,13 @@ import {
   fetchActiveCreditUsers,
   updateOrderStatusNew,
 } from "../../services/api";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../ui/hover-card";
+import { Button } from "../ui/button";
+import { BadgeInfo, InfoIcon } from "lucide-react";
 
 interface OrderCardProps {
   order: Order;
@@ -380,7 +387,34 @@ const OrderCard: React.FC<OrderCardProps> = ({
           <OrderItems key={index} orderItem={item} dishes={dishes} />
         ))}
       </div>
-      <div className="mt-4 flex justify-end items-center">
+      <div className="mt-4 flex justify-between items-center">
+        {order.order_type === "delivery" && (
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Button variant="link"><BadgeInfo size={16} className="mr-1" /><span>Delivery Status</span></Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-32">
+              <div className="relative flex justify-between space-x-4">
+                <div className="space-y-1 flex gap-2 items-center">
+                  {order.delivery_order_status === "pending" ? (
+                    <span className="flex h-2 w-2 translate-y-1 rounded-full bg-yellow-500" />
+                  ) : order.delivery_order_status === "delivered" ? (
+                    <span className="flex h-2 w-2 translate-y-1 rounded-full bg-green-500" />
+                  ) : order.delivery_order_status === "accepted" ||
+                    order.delivery_order_status === "in_progress" ? (
+                    <span className="flex h-2 w-2 translate-y-1 rounded-full bg-indigo-500" />
+                  ) : (
+                    <span className="flex h-2 w-2 translate-y-1 rounded-full bg-red-500" />
+                  )}
+                  <h4 className="relative right-0 text-sm font-semibold">
+                    {order.delivery_order_status}
+                  </h4>
+                </div>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
+        )}
+
         <span className="text-lg font-semibold text-gray-800">
           Total: QAR {order.total_amount}
         </span>

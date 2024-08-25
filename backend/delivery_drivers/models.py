@@ -33,7 +33,7 @@ class DeliveryOrder(models.Model):
     driver = models.ForeignKey(
         DeliveryDriver, on_delete=models.SET_NULL, null=True, related_name="orders"
     )
-    order = models.ForeignKey(
+    order = models.OneToOneField(
         Order, on_delete=models.CASCADE, related_name="delivery_order"
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
