@@ -1,59 +1,29 @@
-import * as React from "react";
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import React, { useState, useEffect } from "react";
 import { DeliveryOrder, PaginatedResponse } from "@/types";
 import {
-  deleteDeliveryOrder,
   fetchDriverOrders,
   updateDeliveryOrderStatus,
+  deleteDeliveryOrder,
 } from "@/services/api";
 import { DeliveryDriverHeader } from "@/components/Layout/DeliveryDriverHeader";
 import { UserRoundPenIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import Loader from "@/components/Layout/Loader";
 import { DrawerDialogDemo } from "@/components/ui/DrawerDialogDemo";
+import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 import { format } from "date-fns";
 
 export const STATUS_CHOICES: [string, string][] = [
@@ -65,17 +35,10 @@ export const STATUS_CHOICES: [string, string][] = [
 ];
 
 export const DeliveryDriverOrdersPage: React.FC = () => {
-  const [orders, setOrders] = React.useState<DeliveryOrder[]>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [orders, setOrders] = useState<DeliveryOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     getOrders();
   }, []);
 
@@ -91,147 +54,52 @@ export const DeliveryDriverOrdersPage: React.FC = () => {
     }
   };
 
-  const columns: ColumnDef<DeliveryOrder>[] = [
-    {
-      accessorKey: "id",
-      header: "Order ID",
-    },
-    {
-      accessorKey: "order.user.username",
-      header: "Assigned by",
-    },
-    {
-      accessorKey: "order.customer_name",
-      header: "Customer Name",
-      cell: ({ row }) => (
-        <div className="capitalize max-w-[250px]">
-          {row.getValue("order_customer_name")}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "order.address",
-      header: "Address",
-      cell: ({ row }) => (
-        <div className="capitalize max-w-[250px]">
-          {row.getValue("order_address")}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "order.customer_phone_number",
-      header: "Contact Number",
-      cell: ({ row }) => (
-        <div className="capitalize max-w-[250px]">
-          {row.getValue("order_customer_phone_number")}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "order.payment_method",
-      header: "Payment Method",
-      cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("order_payment_method")}</div>
-      ),
-    },
-    {
-      accessorKey: "created_at",
-      header: "Ordered at",
-      cell: ({ row }) =>
-        row.getValue("created_at")
-          ? format(new Date(row.getValue("created_at")), "PPpp")
-          : "N/A",
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const [open, setOpen] = React.useState(false);
+  const handleStatusChange = async (orderId: number, newStatus: string) => {
+    try {
+      await updateDeliveryOrderStatus(orderId, newStatus);
+      getOrders(); // Refresh orders after status update
+    } catch (error) {
+      console.error("Failed to update order status:", error);
+    }
+  };
 
-        return (
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="w-[200px] justify-between"
-                onClick={() => setOpen((prevOpen) => !prevOpen)}
-              >
-                {row.getValue("status") !== undefined
-                  ? STATUS_CHOICES.find(
-                      ([value]) => value === row.getValue("status")
-                    )![1]
-                  : "Select status..."}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0">
-              <Command>
-                <CommandList>
-                  <CommandEmpty>No status found.</CommandEmpty>
-                  <CommandGroup>
-                    {STATUS_CHOICES.map(([value, label]) => (
-                      <CommandItem
-                        key={value}
-                        value={value}
-                        onSelect={(currentValue) => {
-                          updateDeliveryOrderStatus(
-                            row.original.id,
-                            currentValue
-                          );
-                          setOpen(false);
-                          setTimeout(() => {
-                            getOrders();
-                          }, 100);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            value === row.getValue("status")
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                        {label}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-        );
-      },
-    },
-    {
-      accessorKey: "order.total_amount",
-      header: () => <div>Total Amount</div>,
-      cell: ({ row }) => (
-        <div className="capitalize">
-          QAR <span className="font-semibold">{row.getValue("order_total_amount")}</span>
-        </div>
-      ),
-    },
-    {
-      id: "actions",
-      enableHiding: false,
-      cell: ({ row }) => {
-        const order = row.original;
-        const status = row.getValue("status");
+  const handleDeleteOrder = async (orderId: number) => {
+    try {
+      await deleteDeliveryOrder(orderId);
+      setOrders((prevOrders) =>
+        prevOrders.filter((order) => order.id !== orderId)
+      );
+    } catch (error) {
+      console.error("Failed to delete order:", error);
+    }
+  };
 
-        return (
+  const OrderCard: React.FC<{ order: DeliveryOrder }> = ({ order }) => (
+    <Card className="mb-4">
+      <CardHeader>
+        <div className="flex justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Order #{order.id}</h3>
+            <p className="text-sm text-gray-500">
+              {format(new Date(order.created_at), "PPpp")}
+            </p>
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              {status === "cancelled" && (
+              {STATUS_CHOICES.map(([value, label]) => (
+                <DropdownMenuItem
+                  key={value}
+                  onSelect={() => handleStatusChange(order.id, value)}
+                >
+                  {label}
+                </DropdownMenuItem>
+              ))}
+              {order.status === "cancelled" && (
                 <DropdownMenuItem
                   onClick={() => handleDeleteOrder(order.id)}
                   className="text-red-500"
@@ -241,43 +109,36 @@ export const DeliveryDriverOrdersPage: React.FC = () => {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-        );
-      },
-    },
-  ];
-
-  const table = useReactTable({
-    data: orders,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  });
-
-  const handleDeleteOrder = async (orderId: number) => {
-    try {
-      await deleteDeliveryOrder(orderId);
-      setOrders((prevOrders) =>
-        prevOrders.filter((order) => order.id !== orderId)
-      );
-    } catch (error) {
-      console.error("Failed to update order status:", error);
-    }
-  };
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p>
+          <strong>Customer:</strong> {order.order.customer_name}
+        </p>
+        <p>
+          <strong>Address:</strong> {order.order.address}
+        </p>
+        <p>
+          <strong>Phone:</strong> {order.order.customer_phone_number}
+        </p>
+        <p>
+          <strong>Payment:</strong> {order.order.payment_method}
+        </p>
+        <p>
+          <strong>Total:</strong> QAR {order.order.total_amount}
+        </p>
+      </CardContent>
+      <CardFooter>
+        <Button variant="outline" className="w-full">
+          {STATUS_CHOICES.find(([value]) => value === order.status)?.[1] ||
+            "Unknown Status"}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
 
   return (
-    <div className="container mt-10">
+    <div className="container mt-10 px-4">
       <DeliveryDriverHeader />
 
       <div className="flex justify-between items-center mt-6 mb-2">
@@ -292,55 +153,12 @@ export const DeliveryDriverOrdersPage: React.FC = () => {
       {isLoading ? (
         <Loader />
       ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No orders available.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+        <div>
+          {orders.length > 0 ? (
+            orders.map((order) => <OrderCard key={order.id} order={order} />)
+          ) : (
+            <p className="text-center py-4">No orders available.</p>
+          )}
         </div>
       )}
     </div>
