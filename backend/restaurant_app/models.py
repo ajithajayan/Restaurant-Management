@@ -20,7 +20,7 @@ class User(AbstractUser):
         ("other", "Other"),
     )
     role = models.CharField(max_length=10, choices=ROLES, blank=True, null=True)
-    passcode = models.CharField(max_length=6, blank=True, null=True)
+    passcode = models.CharField(max_length=6, unique=True)
     gender = models.CharField(max_length=10, choices=GENDERS, null=True, blank=True)
     mobile_number = models.CharField(max_length=15, blank=True)
 
