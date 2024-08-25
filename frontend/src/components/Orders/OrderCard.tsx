@@ -17,18 +17,21 @@ import {
   HoverCardTrigger,
 } from "../ui/hover-card";
 import { Button } from "../ui/button";
-import { BadgeInfo, Bike, Mail, Phone, User } from "lucide-react";
+import { BadgeInfo, Bike, Mail, Phone, PlusCircle } from "lucide-react";
+import { CreditUserModal } from "../modals/CreditUserModal";
 
 interface OrderCardProps {
   order: Order;
   dishes: Dish[];
   creditUsers: CreditUser[];
+  onCreditUserChange: () => void;
 }
 
 const OrderCard: React.FC<OrderCardProps> = ({
   order: initialOrder,
   dishes,
   creditUsers,
+  onCreditUserChange,
 }) => {
   const location = useLocation();
   const [status, setStatus] = useState(initialOrder.status);
@@ -43,6 +46,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
   const [cashAmount, setCashAmount] = useState(0);
   const [bankAmount, setBankAmount] = useState(0);
   const [order, setOrder] = useState<Order>(initialOrder);
+  const [isCreditUserModalOpen, setIsCreditUserModalOpen] = useState(false);
 
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
@@ -535,9 +539,12 @@ const OrderCard: React.FC<OrderCardProps> = ({
 
             {paymentMethod === "credit" && (
               <div className="mt-4">
-                <label className="block text-gray-700 mb-1">
-                  Select Credit User
-                </label>
+                <div className="flex justify-between">
+                  <label className="block text-gray-700 mb-1">
+                    Select Credit User
+                  </label>
+                  <PlusCircle size={24} className="cursor-pointer" onClick={() => setIsCreditUserModalOpen(true)} />
+                </div>
                 <ReactSelect
                   options={creditUsers.map((user) => ({
                     value: user.id,
@@ -565,7 +572,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
               </button>
               <button
                 onClick={handlePaymentSubmit}
-                className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
+                className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 transition"
               >
                 Confirm Payment
               </button>
@@ -573,6 +580,13 @@ const OrderCard: React.FC<OrderCardProps> = ({
           </div>
         </div>
       )}
+
+      <CreditUserModal
+        isOpen={isCreditUserModalOpen}
+        onClose={() => setIsCreditUserModalOpen(false)}
+        creditUserId={null}
+        onCreditUserChange={onCreditUserChange}
+      />
 
       <div className="hidden">
         <div ref={kitchenPrintRef}>

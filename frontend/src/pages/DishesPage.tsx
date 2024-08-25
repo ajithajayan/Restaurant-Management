@@ -290,16 +290,16 @@ const DishesPage: React.FC = () => {
                   onValueChange={(value) => setOrderType(value as OrderType)}
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="dining" id="dining" />
-                    <Label htmlFor="dining">Dining</Label>
+                    <RadioGroupItem value="dining" id="dining" className="h-5 w-5" />
+                    <Label htmlFor="dining" className="text-sm">Dining</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="takeaway" id="takeaway" />
-                    <Label htmlFor="takeaway">Takeaway</Label>
+                    <RadioGroupItem value="takeaway" id="takeaway" className="h-5 w-5" />
+                    <Label htmlFor="takeaway" className="text-sm">Takeaway</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="delivery" id="delivery" />
-                    <Label htmlFor="delivery">Delivery</Label>
+                    <RadioGroupItem value="delivery" id="delivery" className="h-5 w-5" />
+                    <Label htmlFor="delivery"className="text-sm">Delivery</Label>
                   </div>
                 </RadioGroup>
               </div>

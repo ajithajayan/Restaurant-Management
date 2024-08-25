@@ -32,7 +32,7 @@
 }
 
 .invisible-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 3px;
   height: 4px;
 }
 

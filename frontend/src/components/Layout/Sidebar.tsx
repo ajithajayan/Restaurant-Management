@@ -9,7 +9,6 @@ import {
 import {
   Bell,
   LayoutDashboard,
-  Sandwich,
   Settings,
   FileText,
   Receipt,
@@ -20,6 +19,7 @@ import {
   ScrollText,
   ArrowRight,
   Users,
+  Salad,
 } from "lucide-react";
 import LogoutBtn from "./LogoutBtn";
 import NotificationBadge from "./NotificationBadge";
@@ -36,7 +36,7 @@ const Sidebar: React.FC = () => {
   const menuItems = [
     { path: "/home", icon: House, label: "Home" },
     { path: "/", icon: LayoutDashboard, label: "Dashboard" },
-    { path: "/dishes", icon: Sandwich, label: "Dishes" },
+    { path: "/dishes", icon: Salad, label: "Dishes" },
     { path: "/orders", icon: FileText, label: "Orders" },
     { path: "/bills", icon: Receipt, label: "Bills" },
     { path: "/dining-table", icon: HandPlatter, label: "Diningtable" },
@@ -80,7 +80,7 @@ const Sidebar: React.FC = () => {
   );
 
   return (
-    <div className="w-20 md:w-72 bg-white p-4 h-screen border-r border-gray-300 flex flex-col">
+    <div className="w-20 md:w-64 bg-white p-4 h-screen border-r border-gray-300 flex flex-col">
       <Link to="/" className="mb-8 flex justify-center md:justify-start">
         <img src="/images/nasscript_full_banner_logo.png" alt="Logo" className="hidden sm:block h-8 w-auto" />
         <img src="/images/nasscript_logo.png" alt="Logo" className="block sm:hidden h-8 w-8" />
