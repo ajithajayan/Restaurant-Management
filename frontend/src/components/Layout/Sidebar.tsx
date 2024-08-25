@@ -29,8 +29,8 @@ const Sidebar: React.FC = () => {
 
   const isActive = (path: string) => {
     return location.pathname === path
-      ? "bg-black text-white transition-all"
-      : "hover:bg-black hover:text-white";
+      ? "bg-[#6f42c1] text-white transition-all"
+      : "hover:bg-[#6f42c1] hover:text-white";
   };
 
   const menuItems = [
@@ -82,7 +82,7 @@ const Sidebar: React.FC = () => {
   return (
     <div className="w-20 md:w-72 bg-white p-4 h-screen border-r border-gray-300 flex flex-col">
       <Link to="/" className="mb-8 flex justify-center md:justify-start">
-        <img src="/images/logo.png" alt="Logo" className="hidden sm:block h-8 w-auto" />
+        <img src="/images/nasscript_full_banner_logo.png" alt="Logo" className="hidden sm:block h-8 w-auto" />
         <img src="/images/nasscript_company_logo.jpg" alt="Logo" className="block sm:hidden h-8 w-8" />
       </Link>
       <div className="overflow-y-auto overflow-x-hidden invisible-scrollbar flex flex-col justify-between h-screen">
