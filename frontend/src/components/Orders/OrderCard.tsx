@@ -1,70 +1,48 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import Swal from "sweetalert2";
-import { Order, Dish, CreditUser } from "../../types";
-import OrderItems from "./OrderItems";
-import { useUpdateOrderStatus } from "../../hooks/useUpdateOrderStatus";
+import { useReactToPrint } from "react-to-print";
 import KitchenPrint from "./KitchenPrint";
 import SalesPrint from "./SalesPrint";
-import { useReactToPrint } from "react-to-print";
+import OrderItems from "./OrderItems";
 import AddProductModal from "./AddProductModal";
-import {
-  api,
-  fetchActiveCreditUsers,
-  updateOrderStatusNew,
-} from "../../services/api";
-import ReactSelect from "react-select";
 import PrintConfirmationModal from "./PrintConfirmationModal";
+import { updateOrderStatusNew } from "../../services/api";
 
-interface OrderCardProps {
-  order: Order;
-  dishes: Dish[];
-  creditUsers: CreditUser[];
-  onCreditUserChange: () => void;
-  selectedOrders: number[];
-  onOrderSelection: (selectedOrderIds: number[]) => void;
-  onStatusUpdated: () => void;
-}
-
-const OrderCard: React.FC<OrderCardProps> = ({
+const OrderCard = ({
   order: initialOrder,
   dishes,
-  creditUsers,
+  onStatusUpdated,
   selectedOrders,
   onOrderSelection,
-  onStatusUpdated, // Callback to refresh orders
-  onCreditUserChange,
 }) => {
   const [status, setStatus] = useState(initialOrder.status);
-  const { updateOrderStatus, isLoading: isUpdating } = useUpdateOrderStatus();
   const [showModal, setShowModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showPrintConfirmationModal, setShowPrintConfirmationModal] =
+    useState(false);
   const [billType, setBillType] = useState<"kitchen" | "sales">("kitchen");
   const [paymentMethod, setPaymentMethod] = useState(
     initialOrder.payment_method || "cash"
   );
   const [cashAmount, setCashAmount] = useState(0);
   const [bankAmount, setBankAmount] = useState(0);
-  const [order, setOrder] = useState<Order>(initialOrder);
-  const [showPrintConfirmationModal, setShowPrintConfirmationModal] =
-    useState(false); // New state for print confirmation modal
+  const [order, setOrder] = useState(initialOrder);
 
   const kitchenPrintRef = useRef(null);
   const salesPrintRef = useRef(null);
-  const [creditCardUsers, setCreditCardUsers] = useState<CreditUser[]>([]);
-  const [selectedCreditUser, setSelectedCreditUser] =
-    useState<CreditUser | null>(null);
 
-  const handleStatusChange = async (
-    e: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    const newStatus = e.target.value as Order["status"];
+  // Separate print handlers
+  const handlePrintKitchenBill = useReactToPrint({
+    content: () => kitchenPrintRef.current,
+  });
 
-    if (!order) {
-      console.error("Order is undefined");
-      return; // Exit if order is undefined
-    }
+  const handlePrintSalesBill = useReactToPrint({
+    content: () => salesPrintRef.current,
+  });
 
+  const handleStatusChange = async (e) => {
+    const newStatus = e.target.value;
     setStatus(newStatus);
 
     if (newStatus === "approved") {
@@ -145,7 +123,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
   };
 
   const handleAddProductSubmit = async (
-    products: { dish: Dish; quantity: number }[]
+    products: { dish; quantity: number }[]
   ) => {
     try {
       const newTotalAmount = products.reduce(
@@ -179,15 +157,13 @@ const OrderCard: React.FC<OrderCardProps> = ({
     }
   };
 
-  const handlePrint = useReactToPrint({
-    content: () =>
-      billType === "kitchen" ? kitchenPrintRef.current : salesPrintRef.current,
-  });
-
   const handleGenerate = () => {
-    handlePrint();
+    if (billType === "kitchen") {
+      handlePrintKitchenBill();
+    } else {
+      handlePrintSalesBill();
+    }
     setShowModal(false);
-    updateOrderStatus({ orderId: order.id, status });
     onStatusUpdated(); // Refresh orders after status change
   };
 
@@ -220,10 +196,6 @@ const OrderCard: React.FC<OrderCardProps> = ({
         payment_method: paymentMethod,
         cash_amount: paymentMethod === "cash-bank" ? cashAmount : undefined,
         bank_amount: paymentMethod === "cash-bank" ? bankAmount : undefined,
-        credit_user_id:
-          paymentMethod === "credit" && selectedCreditUser
-            ? selectedCreditUser.id
-            : undefined,
       };
 
       // Send the updated status and additional payment-related data to the API
@@ -273,21 +245,36 @@ const OrderCard: React.FC<OrderCardProps> = ({
         </div>
 
         <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-0">
-          {/* Print Icon for Kitchen and Sales Bills */}
-          {/* Print Icon for Kitchen and Sales Bills */}
-          {(status === "approved" || status === "delivered") && (
+          {/* Print Icon for Kitchen Bill */}
+          {status === "approved" && (
             <button
-              onClick={() => {
-                if (status === "approved") {
-                  setBillType("kitchen");
-                  setTimeout(() => handlePrint(), 0); // Ensure billType is updated before printing
-                } else if (status === "delivered") {
-                  setBillType("sales");
-                  setTimeout(() => handlePrint(), 0); // Ensure billType is updated before printing
-                }
-              }}
+              onClick={handlePrintKitchenBill}
               className="text-gray-700 hover:text-blue-500 focus:outline-none"
-              title="Print Bill"
+              title="Print Kitchen Bill"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 9V2h12v7M6 18h12v5H6v-5zm2-3h8v3H8v-3zM6 11h12v4H6v-4z"
+                ></path>
+              </svg>
+            </button>
+          )}
+
+          {/* Print Icon for Sales Bill */}
+          {status === "delivered" && (
+            <button
+              onClick={handlePrintSalesBill}
+              className="text-green-500 hover:text-gray-700 focus:outline-none"
+              title="Print Sales Bill"
             >
               <svg
                 className="w-6 h-6"
@@ -310,9 +297,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
             value={status}
             onChange={handleStatusChange}
             className="border rounded-md p-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={
-              isUpdating || status === "delivered" || status === "cancelled"
-            } // Disable if order is delivered or cancelled
+            disabled={status === "delivered" || status === "cancelled"}
           >
             <option value="pending" disabled={status === "approved"}>
               Pending
@@ -325,12 +310,12 @@ const OrderCard: React.FC<OrderCardProps> = ({
           <button
             onClick={() => setShowAddProductModal(true)}
             className={`w-full sm:w-auto px-4 py-2 rounded-md flex items-center transition 
-            ${
-              status === "delivered" || status === "cancelled"
-                ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                : "bg-blue-500 text-white hover:bg-blue-600"
-            }`}
-            disabled={status === "delivered" || status === "cancelled"} // Disable if order is delivered or cancelled
+    ${
+      status === "delivered" || status === "cancelled"
+        ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+        : "bg-blue-500 text-white hover:bg-blue-600"
+    }`}
+            disabled={status === "delivered" || status === "cancelled"}
           >
             <svg
               className="w-5 h-5 mr-1"
@@ -407,8 +392,8 @@ const OrderCard: React.FC<OrderCardProps> = ({
           </div>
         </div>
       )}
-      {/* add product modal for adding products to the order */}
 
+      {/* Add Product Modal */}
       {showAddProductModal && (
         <AddProductModal
           onClose={() => setShowAddProductModal(false)}
@@ -416,15 +401,14 @@ const OrderCard: React.FC<OrderCardProps> = ({
         />
       )}
 
-      {/* Add the PrintConfirmationModal */}
+      {/* Add the Print Confirmation Modal */}
       <PrintConfirmationModal
         isOpen={showPrintConfirmationModal}
         onClose={() => setShowPrintConfirmationModal(false)}
         onPrint={handlePrintConfirmation}
       />
 
-      {/* payment modal for updating payment methods */}
-
+      {/* Payment Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
@@ -445,9 +429,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
             {paymentMethod === "cash-bank" && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-gray-700 mb-1">
-                    Cash Amount
-                  </label>
+                  <label className="block text-gray-700 mb-1">Cash Amount</label>
                   <input
                     type="number"
                     value={cashAmount}
@@ -458,9 +440,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-1">
-                    Bank Amount
-                  </label>
+                  <label className="block text-gray-700 mb-1">Bank Amount</label>
                   <input
                     type="number"
                     value={bankAmount}
@@ -468,29 +448,6 @@ const OrderCard: React.FC<OrderCardProps> = ({
                     className="border rounded-md p-2 w-full text-gray-700 bg-gray-100 cursor-not-allowed"
                   />
                 </div>
-              </div>
-            )}
-
-            {paymentMethod === "credit" && (
-              <div className="mt-4">
-                <label className="block text-gray-700 mb-1">
-                  Select Credit User
-                </label>
-                <ReactSelect
-                  options={creditCardUsers.map((user) => ({
-                    value: user.id,
-                    label: user.username,
-                  }))}
-                  onChange={(selectedOption) =>
-                    setSelectedCreditUser(
-                      creditCardUsers.find(
-                        (user) => user.id === selectedOption.value
-                      ) || null
-                    )
-                  }
-                  placeholder="Search for a credit user..."
-                  isSearchable
-                />
               </div>
             )}
 
