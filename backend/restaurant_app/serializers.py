@@ -160,8 +160,10 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
     def update(self, instance, validated_data):
+        
         items_data = validated_data.pop("items", None)
-
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
         # Start by resetting the total amount to 0
         total_amount = 0
 
