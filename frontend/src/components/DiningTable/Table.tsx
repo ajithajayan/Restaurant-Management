@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
 import Modal from "./Modal"; // Import the Modal component
+import { api } from "@/services/api";
 
 interface TableProps {
   id: number;
@@ -37,7 +37,7 @@ const Table: React.FC<TableProps> = ({
 
   const handleEditClick = async () => {
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/tables/${id}/`);
+      const response = await api.get(`/tables/${id}/`);
       setTableDetails(response.data);
       setIsModalOpen(true);
       onModalOpen();

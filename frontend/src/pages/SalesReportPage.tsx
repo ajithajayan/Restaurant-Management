@@ -73,6 +73,7 @@ const SalesReportPage: React.FC = () => {
   const [isSalesEditModalOpen, setIsSalesEditModalOpen] = useState(false);
   const [isMessEditModalOpen, setIsMessEditModalOpen] = useState(false);
   const [currentReport, setCurrentReport] = useState(null);
+  const [isAllButtonActive, setIsAllButtonActive] = useState(true);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [orderHistiory, setOrderHistory] = useState<Transaction[]>([]);
@@ -194,14 +195,22 @@ const SalesReportPage: React.FC = () => {
     setCurrentReport(null);
     setCurrentMember(null);
   };
-  
+
 
 
   const handleButtonClick = (buttonName: string) => {
-    let filter = {};
+    let filter = {  };
     setActiveButton(buttonName);
+    if (buttonName === "All") {
+      setFromDate(null);
+      setToDate(null);
+      setCurrentPage(1);
+      fetchDataWithFilter({});
+    }
 
-    if (reportType === "sales") {
+    if (buttonName === "All") {
+      filter = {}; // No filter for "All" button
+    } else if (reportType === "sales") {
       switch (buttonName) {
         case "Dining":
           filter = { order_type: "dining" };
@@ -264,9 +273,12 @@ const SalesReportPage: React.FC = () => {
     fetchDataWithFilter(filter);
   };
 
+
   const handleReset = () => {
     setFromDate(null);
     setToDate(null);
+    setIsAllButtonActive(true);
+    setActiveButton("All")
     setCurrentPage(1);
     fetchDataWithFilter({});
   };
@@ -349,6 +361,12 @@ const SalesReportPage: React.FC = () => {
 
         {/* Filter Buttons */}
         <div className="flex flex-wrap space-x-2 mb-4">
+          <button
+            onClick={() => handleButtonClick("All")}
+            className={`p-2 rounded ${activeButton === "All" ? "bg-blue-500 text-white" : "bg-gray-200"} ${isAllButtonActive ? 'bg-blue-500' : 'border border-transparent'}`}
+            >
+            All
+          </button>
           {reportType === "sales" ? (
             <>
               <button
@@ -494,7 +512,7 @@ const SalesReportPage: React.FC = () => {
                 ? paginatedReports.map((report) => (
                   <tr key={report.id}>
                     <td className="border px-4 py-2">{report.invoice_number}</td>
-                    <td className="border px-4 py-2">{report.customer_phone_number}</td>
+                    <td className="border px-4 py-2">  {report.customer_phone_number ? report.customer_phone_number : "N/A"} </td>
                     <td className="border px-4 py-2">
                       {format(new Date(report.created_at), 'dd-MM-yyyy')}
                     </td>
