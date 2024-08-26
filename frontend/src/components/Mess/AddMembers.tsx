@@ -42,7 +42,8 @@ const AddMembers: React.FC = () => {
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [paidAmount, setPaidAmount] = useState<string>("");
   const [pendingAmount, setPendingAmount] = useState<string>("");
-
+  const [discountAmount, setDiscountAmount] = useState<string>("0");
+  const [grandTotal, setGrandTotal] = useState<number>(0);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false); // State for modal visibility
   const [responseData, setResponseData] = useState<any>(null); // State for response data
 
@@ -79,12 +80,23 @@ const AddMembers: React.FC = () => {
   }, [menus, selectedWeek]);
 
   useEffect(() => {
+    const grandTotal = totalAmount - parseFloat(discountAmount || "0");
+    setGrandTotal(grandTotal);
+  }, [totalAmount, discountAmount]);
+
+  useEffect(() => {
     if (startDate && selectedWeek) {
       const start = new Date(startDate);
       start.setDate(start.getDate() + (selectedWeek * 7) - 1);
       setEndDate(start.toISOString().split('T')[0]); // Format as YYYY-MM-DD
     }
+
   }, [startDate, selectedWeek]);
+
+  const handleDiscountAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDiscountAmount(value);
+  };
 
   const menuIds = menuType === "own_menu"
     ? menus.map(menu => menu.id)
@@ -98,9 +110,11 @@ const AddMembers: React.FC = () => {
       alert("Please select a mess type");
       return;
     }
+
     const menuIds = menuType === "own_menu"
       ? menus.map(menu => menu.id)
       : menus.filter(menu => menu.created_by === mobileNumber).map(menu => menu.id);
+
     const newMember = {
       customer_name: customerName,
       mobile_number: mobileNumber,
@@ -114,6 +128,8 @@ const AddMembers: React.FC = () => {
       total_amount: totalAmount,
       paid_amount: parseFloat(paidAmount),
       pending_amount: parseFloat(pendingAmount),
+      discount_amount: discountAmount,
+      grand_total: grandTotal,
       menus: menuIds,
     };
 
@@ -132,12 +148,13 @@ const AddMembers: React.FC = () => {
         setPaymentMethod("cash");
         setMenuType("own_menu");
         setTotalAmount(0);
+        setDiscountAmount("0");
+        setGrandTotal(0);
         setSelectedWeek(1);
         setPaidAmount("");
         setPendingAmount("");
       })
       .catch((error) => console.error("Error adding member:", error));
-
   };
 
 
@@ -375,12 +392,41 @@ const AddMembers: React.FC = () => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
           </div>
+
+          {/* Discount Amount */}
+          <div className="flex-1 min-w-[200px]">
+            <label htmlFor="discountAmount" className="block text-sm font-medium text-gray-700">
+              Discount Amount
+            </label>
+            <input
+              id="discountAmount"
+              type="text"
+              value={discountAmount}
+              onChange={handleDiscountAmountChange}
+              pattern="[0-9]*"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+
+          {/* Grand Total */}
+          <div className="flex-1 min-w-[200px]">
+            <label htmlFor="grandTotal" className="block text-sm font-medium text-gray-700">
+              Grand Total
+            </label>
+            <input
+              id="grandTotal"
+              type="text"
+              value={grandTotal}
+              readOnly
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
         </div>
 
         {/* Submit button */}
         <button
           type="submit"
-          className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mt-4"
+          className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mt-4"
         >
           Submit
         </button>

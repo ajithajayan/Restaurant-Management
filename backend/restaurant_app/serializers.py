@@ -323,6 +323,10 @@ class MenuSerializer(serializers.ModelSerializer):
 
 
 class MessSerializer(serializers.ModelSerializer):
+    mess_type = MessTypeSerializer(read_only=True) 
+    mess_type_id = serializers.PrimaryKeyRelatedField(
+        queryset=MessType.objects.all(), write_only=True, source='mess_type'
+    ) 
     class Meta:
         model = Mess
         fields = [
@@ -340,6 +344,8 @@ class MessSerializer(serializers.ModelSerializer):
             "paid_amount",
             "pending_amount",
             "menus",
+            "discount_amount",
+            "grand_total"
         ]
 
 
@@ -363,3 +369,8 @@ class CreditUserSerializer(serializers.ModelSerializer):
             "is_active",
             "credit_orders",
         ]
+class TransactionSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Transaction
+        fields = ['id', 'received_amount', 'status', 'cash_amount', 'bank_amount', 'payment_method', 'mess','date']

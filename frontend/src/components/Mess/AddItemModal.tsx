@@ -1,5 +1,5 @@
+import { api } from "@/services/api";
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
 
 interface Dish {
   id: number;
@@ -33,22 +33,23 @@ const AddItemModal: React.FC<AddItemProps> = ({ menu, onClose, onItemAdded }) =>
   const [mealType, setMealType] = useState("");
   const [selectedDish, setSelectedDish] = useState<number | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
-  const [searchQuery, setSearchQuery] = useState(""); // Add state for search query
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const selectRef = useRef<HTMLSelectElement>(null);
+  console.log("dishes",dishes)
 
   useEffect(() => {
     const fetchDishes = async () => {
       if (loading || !hasMore) return;
       setLoading(true);
       try {
-        const response = await axios.get("http://127.0.0.1:8000/api/dishes/", {
+        const response = await api.get("/dishes/", {
           params: { page }
         });
         if (response.data && Array.isArray(response.data.results)) {
-          setDishes(prevDishes => [...prevDishes, ...response.data.results]);
+
+          setDishes(response.data.results);
           if (response.data.next) {
             setPage(prevPage => prevPage + 1);
           } else {
@@ -99,7 +100,7 @@ const AddItemModal: React.FC<AddItemProps> = ({ menu, onClose, onItemAdded }) =>
     };
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/api/menu-items/", data);
+      const response = await api.post("/menu-items/", data);
       console.log("Menu item added:", response.data);
       onItemAdded();
       onClose();
@@ -109,9 +110,7 @@ const AddItemModal: React.FC<AddItemProps> = ({ menu, onClose, onItemAdded }) =>
     }
   };
 
-  const filteredDishes = dishes.filter((dish) =>
-    dish.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur">
@@ -138,23 +137,16 @@ const AddItemModal: React.FC<AddItemProps> = ({ menu, onClose, onItemAdded }) =>
             <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="dish">
               Dish
             </label>
-            <input
-              type="text"
-              placeholder="Search dish"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full p-2 mb-2 border border-gray-300 rounded-md"
-            />
             <select
               id="dish"
               ref={selectRef}
               value={selectedDish || ""}
               onChange={(e) => setSelectedDish(Number(e.target.value))}
-              className="block w-full p-2 border border-gray-300 rounded-md max-h-40 overflow-y-auto"
+              className="block w-full p-2 border border-gray-300 rounded-md max-h-40 overflow-y-auto text-black"
               style={{ position: 'relative' }} // Add relative position
             >
               <option value="">Select dish</option>
-              {filteredDishes.map((dish) => (
+              {dishes.map((dish) => (
                 <option key={dish.id} value={dish.id}>
                   {dish.name}
                 </option>
