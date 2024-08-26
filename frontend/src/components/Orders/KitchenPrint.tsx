@@ -26,10 +26,10 @@ const KitchenPrint: React.FC<KitchenPrintProps> = ({ order, dishes }) => {
     return items.map((item, index) => {
       const dish = dishes.find(dish => dish.id === item.dish);
       return (
-        <div key={index} className="print-item flex justify-between mb-1">
-          <span className="print-item-name">{dish ? dish.name : 'Unknown Dish'}</span>
-          <span className="print-item-quantity">{item.quantity}x</span>
-        </div>
+        <tr key={index} className="print-item">
+          <td className="print-item-name">{dish ? dish.name : 'Unknown Dish'}</td>
+          <td className="print-item-quantity text-right">{item.quantity}x</td>
+        </tr>
       );
     });
   };
@@ -45,7 +45,17 @@ const KitchenPrint: React.FC<KitchenPrintProps> = ({ order, dishes }) => {
         {regularItems.length > 0 && (
           <div>
             <h4 className="font-semibold mb-2">Order Items:</h4>
-            {renderItems(regularItems)}
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="text-left">Item</th>
+                  <th className="text-right">Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {renderItems(regularItems)}
+              </tbody>
+            </table>
           </div>
         )}
 
@@ -56,7 +66,17 @@ const KitchenPrint: React.FC<KitchenPrintProps> = ({ order, dishes }) => {
               <span className="mx-4 text-red-500 font-semibold">Newly Added</span>
               <hr className="flex-grow border-gray-300" />
             </div>
-            {renderItems(newlyAddedItems)}
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="text-left">Item</th>
+                  <th className="text-right">Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {renderItems(newlyAddedItems)}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

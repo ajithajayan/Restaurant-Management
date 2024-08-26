@@ -103,14 +103,37 @@ const OrdersPage: React.FC = () => {
     }
   };
 
-  const triggerPrint = (type: "kitchen" | "sales") => {
+  const triggerPrint = (type) => {
     if (!type || !printRef.current) return;
 
     const printWindow = window.open("", "PRINT", "height=600,width=800");
 
     if (printWindow) {
       printWindow.document.write("<html><head><title>Print</title>");
-      printWindow.document.write("<style>body { font-family: Arial, sans-serif; padding: 20px; }</style>");
+      printWindow.document.write("<style>");
+      printWindow.document.write(`
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .bill-container { 
+                width: 300px; 
+                padding: 20px; 
+                border: 2px dashed gray; 
+                margin: 0 auto; 
+                text-align: left; 
+                background-color: #fff;
+            }
+            h2 { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px; }
+            p { margin: 5px 0; font-size: 14px; }
+            h4 { margin-top: 20px; font-size: 16px; font-weight: bold; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th, td { padding: 5px 0; }
+            th { text-align: left; font-weight: bold; border-bottom: 1px solid #ccc; }
+            .kitchen-bill-table td, .sales-bill-table td { padding: 5px 0; }
+            .sales-bill-table th, .sales-bill-table td { text-align: right; }
+            .sales-bill-table th:nth-child(1), .sales-bill-table td:nth-child(1) { text-align: left; }
+            .total-row { font-weight: bold; border-top: 1px solid #ccc; padding-top: 10px; }
+            .newly-added { color: red; margin-top: 20px; display: block; text-align: center; }
+        `);
+      printWindow.document.write("</style>");
       printWindow.document.write("</head><body>");
       printWindow.document.write(printRef.current.innerHTML);
       printWindow.document.write("</body></html>");
@@ -173,7 +196,7 @@ const OrdersPage: React.FC = () => {
         >
           Select All Pending Orders
         </button>
-        
+
         <button
           onClick={() => handleFilterOrders("approved")}
           className={`px-4 py-2 rounded-md ${
