@@ -17,7 +17,7 @@ const HomePage: React.FC = () => {
       <div className="grid grid-cols-12 gap-4 p-4 h-full">
         <div className="col-span-2 space-y-12 flex flex-col items-center">
           {cards.map((card) => (
-            <div className='hover:bg-black' key={card.id}>
+            <div className='' key={card.id}>
               <Card 
                 card={card} 
                 onClick={() => setSelectedCard(card)} 

@@ -38,7 +38,7 @@ const HomeCard: React.FC<CardProps> = ({ card, onClick, isActive }) => {
     <div
       onClick={onClick}
       className={`w-24 h-24 p-4 ${
-        isActive ? 'bg-blue-500' : 'bg-gradient-to-r from-purple-500 to-pink-500'
+        isActive ? 'bg-[#6f42c1]' : 'bg-gradient-to-r from-purple-500 to-pink-500'
       } flex flex-col items-center justify-center cursor-pointer rounded-lg shadow-lg`}
     >
       {renderIcon()}
