@@ -220,7 +220,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
   const handlePaymentSubmit = async () => {
     try {
       let additionalData;
-  
+
       // Prepare the payload based on the selected payment method
       if (paymentMethod === "cash") {
         additionalData = {
@@ -250,27 +250,32 @@ const OrderCard: React.FC<OrderCardProps> = ({
             : undefined,
         };
       }
-  
+
       // Send the updated status and additional payment-related data to the API
-      
-      const response = await updateOrderStatusNew(order.id, "delivered", additionalData);
-      console.log("order",order)
-      if (response && response.detail) {  // Ensure the API call was successful
+
+      const response = await updateOrderStatusNew(
+        order.id,
+        "delivered",
+        additionalData
+      );
+      console.log("order", order);
+      if (response && response.detail) {
+        // Ensure the API call was successful
         // Call the bills API after successful status update
         const billsResponse = await api.post("/bills/", {
           order: order.id,
           total_amount: order.total_amount,
           paid: true,
         });
-  
+
         if (billsResponse && billsResponse.status === 201) {
           setShowPaymentModal(false);
           setStatus("delivered");
           disableAllActions();
-  
+
           // Trigger the print confirmation modal
           setShowPrintConfirmationModal(true);
-  
+
           // Trigger the order list refresh after payment submission
           onStatusUpdated(); // Refresh orders after status change
         } else {
@@ -282,10 +287,10 @@ const OrderCard: React.FC<OrderCardProps> = ({
       setShowPaymentModal(false);
       setStatus("delivered");
       disableAllActions();
-  
+
       // Trigger the print confirmation modal
       setShowPrintConfirmationModal(true);
-  
+
       // Trigger the order list refresh after payment submission
       onStatusUpdated(); // Refresh orders after status change
     } catch (error) {
@@ -297,8 +302,6 @@ const OrderCard: React.FC<OrderCardProps> = ({
       );
     }
   };
-  
-  
 
   const handlePrintConfirmation = () => {
     setBillType("sales");
@@ -426,6 +429,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
       <p className="text-sm text-gray-500 mb-4">
         Ordered on: {new Date(order.created_at).toLocaleString()}
       </p>
+
       <div className="space-y-3">
         {order.items.map((item, index) => (
           <OrderItems
@@ -498,10 +502,24 @@ const OrderCard: React.FC<OrderCardProps> = ({
               </div>
             </HoverCardContent>
           </HoverCard>
+
+
         )}
+        {
+          order.order_type !== "delivery" && (
+            <button className="font-bold italic">
+            {order.order_type.charAt(0).toUpperCase() + order.order_type.slice(1)}
+          </button>
+          )
+        }
+       
         <span className="text-lg font-semibold text-gray-800">
           Total: QAR {order.total_amount}
         </span>
+        {/* <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
+            {order.order_type}
+          </h2> */}
+        
       </div>
 
       {showModal && (
