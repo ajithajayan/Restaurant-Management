@@ -310,10 +310,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(trends)
 
 
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from .models import Order, CreditUser, CreditOrder
-
 class OrderStatusUpdateViewSet(viewsets.GenericViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderStatusUpdateSerializer
