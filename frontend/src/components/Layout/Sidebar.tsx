@@ -123,16 +123,18 @@ const Sidebar: React.FC = () => {
         href="https://nasscript.com"
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-4 flex justify-center items-center"
+        className="mt-4  flex justify-center items-center  flex-col"
       >
         <p className="hidden sm:block text-black-600 text-md md:text-md font-bold">
           Powered by
         </p>
-        <img
+        {/* <img
           src="/images/nasscript_logo.png"
           alt="logo"
           className="ml-2 w-5 h-5"
-        />
+        /> */}
+         <img src="/images/nasscript_full_banner_logo.png" alt="Logo" className="hidden sm:block h-5 w-auto" />
+         <img src="/images/nasscript_logo.png" alt="Logo" className="block sm:hidden h-5 w-5" />
       </a>
     </div>
   );
