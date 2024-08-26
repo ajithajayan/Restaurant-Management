@@ -17,7 +17,9 @@ interface Member {
   paid_amount?: string;
   pending_amount?: string;
   total_amount: string;
-  grand_total:string;
+  grand_total: string;
+  cash_amount: string;
+  bank_amount: string;
 }
 
 interface Transaction {
@@ -119,6 +121,28 @@ const MessMembers: React.FC = () => {
     return <div>{error}</div>;
   }
 
+  // Calculate totals
+  const totalCashAmount = members.reduce(
+    (sum, member) => sum + parseFloat(member.cash_amount || "0"),
+    0
+  );
+  const totalBankAmount = members.reduce(
+    (sum, member) => sum + parseFloat(member.bank_amount || "0"),
+    0
+  );
+  const totalPaidAmount = members.reduce(
+    (sum, member) => sum + parseFloat(member.paid_amount || "0"),
+    0
+  );
+  const totalPendingAmount = members.reduce(
+    (sum, member) => sum + parseFloat(member.pending_amount || "0"),
+    0
+  );
+  const totalGrandTotal = members.reduce(
+    (sum, member) => sum + parseFloat(member.grand_total || "0"),
+    0
+  );
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full bg-white">
@@ -128,10 +152,12 @@ const MessMembers: React.FC = () => {
             <th className="py-2 px-4 border-b text-left">Mobile</th>
             <th className="py-2 px-4 border-b text-left">Start Date</th>
             <th className="py-2 px-4 border-b text-left">End Date</th>
+            <th className="py-2 px-4 border-b text-left">Payment type</th>
+            <th className="py-2 px-4 border-b text-left">Cash</th>
+            <th className="py-2 px-4 border-b text-left">Bank</th>
             <th className="py-2 px-4 border-b text-left">Paid</th>
             <th className="py-2 px-4 border-b text-left">Pending</th>
             <th className="py-2 px-4 border-b text-left">Total</th>
-            <th className="py-2 px-4 border-b text-left">Payment Method</th>
             <th className="py-2 px-4 border-b text-left">Edit</th>
             <th className="py-2 px-4 border-b text-left">Received</th>
           </tr>
@@ -150,10 +176,12 @@ const MessMembers: React.FC = () => {
               </td>
               <td className="py-2 px-4 border-b">{member.start_date}</td>
               <td className="py-2 px-4 border-b">{member.end_date}</td>
+              <td className="py-2 px-4 border-b">{member.payment_method}</td>
+              <td className="py-2 px-4 border-b">QR{member.cash_amount}</td>
+              <td className="py-2 px-4 border-b">QR{member.bank_amount}</td>
               <td className="py-2 px-4 border-b">QR{member.paid_amount}</td>
               <td className="py-2 px-4 border-b">QR{member.pending_amount}</td>
               <td className="py-2 px-4 border-b">QR{member.grand_total}</td>
-              <td className="py-2 px-4 border-b">{member.payment_method}</td>
               <td className="py-2 px-4 border-b">
                 <button
                   className="bg-black text-white py-1 px-2 rounded hover:bg-gray-500"
@@ -177,6 +205,16 @@ const MessMembers: React.FC = () => {
               </td>
             </tr>
           ))}
+          {/* Totals Row */}
+          <tr className="bg-gray-100 font-bold">
+            <td className="py-2 px-4 border-b text-right" colSpan={5}>Totals</td>
+            <td className="py-2 px-4 border-b">QR{totalCashAmount.toFixed(2)}</td>
+            <td className="py-2 px-4 border-b">QR{totalBankAmount.toFixed(2)}</td>
+            <td className="py-2 px-4 border-b">QR{totalPaidAmount.toFixed(2)}</td>
+            <td className="py-2 px-4 border-b">QR{totalPendingAmount.toFixed(2)}</td>
+            <td className="py-2 px-4 border-b">QR{totalGrandTotal.toFixed(2)}</td>
+            <td className="py-2 px-4 border-b" colSpan={2}></td>
+          </tr>
         </tbody>
       </table>
       {isEditModalOpen && currentMember && (

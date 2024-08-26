@@ -152,7 +152,7 @@ const CardDetails: React.FC<CardDetailsProps> = ({ selectedCard }) => {
   );
 
   return (
-    <div className="p-4 bg-customPink shadow h-screen">
+    <div className="p-4  shadow h-screen">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">{selectedCard.title}</h2>
         <div className="flex items-center space-x-2">
@@ -205,7 +205,7 @@ const CardDetails: React.FC<CardDetailsProps> = ({ selectedCard }) => {
               {currentOrders.map((order) => (
                 <li
                   key={order.id}
-                  className="bg-customLightPurple p-4 rounded-lg shadow-md"
+                  className="bg-gray-100 p-4 rounded-lg shadow-md"
                 >
                   <div>
                     <strong>Order ID:</strong> {order.id}

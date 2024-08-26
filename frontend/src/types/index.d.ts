@@ -37,6 +37,7 @@ export interface Order {
   customer_phone_number: number;
   customer_name: number;
   address: string;
+  detail:string;
 }
 
 export interface Bill {
