@@ -42,7 +42,7 @@ const SalesPrint: React.FC<SalesPrintProps> = ({ order, dishes }) => {
               return (
                 <tr key={index} className="print-item">
                   <td className="print-item-name">{dish ? dish.name : 'Unknown Dish'}</td>
-                  <td className="print-item-quantity text-center">{item.quantity}x</td>
+                  <td className="print-item-quantity text-center">x{item.quantity}</td>
                   <td className="print-item-price text-right">QAR {dish ? dish.price * item.quantity : 0}</td>
                 </tr>
               );

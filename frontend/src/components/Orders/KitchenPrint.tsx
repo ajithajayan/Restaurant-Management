@@ -28,7 +28,7 @@ const KitchenPrint: React.FC<KitchenPrintProps> = ({ order, dishes }) => {
       return (
         <tr key={index} className="print-item">
           <td className="print-item-name">{dish ? dish.name : 'Unknown Dish'}</td>
-          <td className="print-item-quantity text-right">{item.quantity}x</td>
+          <td className="print-item-quantity text-right">x {item.quantity}</td>
         </tr>
       );
     });
