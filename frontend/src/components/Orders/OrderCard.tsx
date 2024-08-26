@@ -6,10 +6,9 @@ import { useUpdateOrderStatus } from "../../hooks/useUpdateOrderStatus";
 import { useReactToPrint } from "react-to-print";
 import KitchenPrint from "./KitchenPrint";
 import SalesPrint from "./SalesPrint";
-import OrderItems from "./OrderItems";
 import AddProductModal from "./AddProductModal";
 import PrintConfirmationModal from "./PrintConfirmationModal";
-import { api, fetchActiveCreditUsers, updateOrderStatusNew } from "../../services/api";
+import { api, updateOrderStatusNew } from "../../services/api";
 import ReactSelect from "react-select";
 import {
   HoverCard,
@@ -68,7 +67,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
     content: () => salesPrintRef.current,
   });
 
-  const handleStatusChange = async (e) => {
+  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value;
     setStatus(newStatus);
 
@@ -150,7 +149,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
   };
 
   const handleAddProductSubmit = async (
-    products: { dish; quantity: number }[]
+    products: { dish: Dish; quantity: number }[]
   ) => {
     try {
       const newTotalAmount = products.reduce(
@@ -251,7 +250,8 @@ const OrderCard: React.FC<OrderCardProps> = ({
     setBillType("sales");
     setShowModal(true); // Show the print modal
     setShowPrintConfirmationModal(false); // Close the print confirmation modal
-    
+  };
+
   const handleCreditUserCreated = (newCreditUser: CreditUser | undefined) => {
     if (newCreditUser) {
       setSelectedCreditUser(newCreditUser);
