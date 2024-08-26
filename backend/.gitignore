@@ -11,7 +11,7 @@ venv/
 /media/
 
 # Ignore migration files
-/migrations/
+migrations/
 
 # Ignore static files and test data
 /staticfiles/
