@@ -20,7 +20,6 @@ const OrdersPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [showActionButton, setShowActionButton] = useState<boolean>(false);
   const [printType, setPrintType] = useState<"kitchen" | "sales" | null>(null);
-  
 
   useEffect(() => {
     loadCreditCardUsers();
@@ -93,6 +92,14 @@ const OrdersPage: React.FC = () => {
     }
   };
 
+  const calculateCashAmount = (orderId: number) => {
+    const order = filteredOrders.find(order => order.id === orderId);
+    if (!order) return 0;
+
+    // Customize the calculation logic if necessary
+    return order.total_amount;
+  };
+
   const handleGenerateKitchenBills = async () => {
     try {
       await Promise.all(
@@ -109,17 +116,26 @@ const OrdersPage: React.FC = () => {
   const handlePrintSalesBills = async () => {
     try {
       await Promise.all(
-        selectedOrders.map((orderId) =>
-          updateOrderStatusNew(orderId, "delivered", { payment_method: "cash" })
-        )
+        selectedOrders.map((orderId) => {
+          const order = filteredOrders.find((order) => order.id === orderId);
+          if (!order) return null;
+  
+          const cashAmount = order.total_amount; // Set the total amount as cash amount
+          return updateOrderStatusNew(orderId, "delivered", {
+            payment_method: "cash",
+            cash_amount: cashAmount, // Set cash_amount to the total amount
+            bank_amount: 0, // Explicitly set bank_amount to 0
+          });
+        })
       );
       triggerPrint("sales");
     } catch (error) {
       console.error("Error printing sales bills:", error);
     }
   };
+  
 
-  const triggerPrint = (type) => {
+  const triggerPrint = (type: "kitchen" | "sales") => {
     if (!type || !printRef.current) return;
 
     const printWindow = window.open("", "PRINT", "height=600,width=800");

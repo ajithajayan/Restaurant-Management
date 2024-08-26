@@ -50,9 +50,15 @@ const SalesPrint: React.FC<SalesPrintProps> = ({ order, dishes }) => {
           </tbody>
         </table>
       </div>
-      <div className="print-summary mt-4 text-right">
-        <div className="print-total-quantity">Total Quantity: {totalQuantity}</div>
-        <div className="print-total-amount font-bold">Total Amount: QAR {order.total_amount}</div>
+      <div className="print-summary mt-4">
+        <div className="flex justify-between">
+          <span >Total Quantity:</span>
+          <span className="font-bold">{totalQuantity} </span>
+        </div>
+        <div className="flex justify-between mt-2">
+          <span >Total Amount:</span>
+          <span className="font-bold">QAR {order.total_amount}</span>
+        </div>
       </div>
     </div>
   );

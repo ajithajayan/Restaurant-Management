@@ -208,11 +208,17 @@ class OrderStatusUpdateSerializer(serializers.Serializer):
             if not payment_method:
                 raise serializers.ValidationError("Payment method is required when status is 'delivered'.")
 
+            if payment_method == 'cash':
+                data['cash_amount'] = data.get('cash_amount', 0)  # Default to 0 if not provided
+                data['bank_amount'] = 0  # Ensure bank_amount is 0 for cash payment method
+
+            if payment_method == 'bank':
+                data['bank_amount'] = data.get('bank_amount', 0)  # Default to 0 if not provided
+                data['cash_amount'] = 0  # Ensure cash_amount is 0 for bank payment method
+
             if payment_method == 'cash-bank':
-                if 'cash_amount' not in data or 'bank_amount' not in data:
-                    raise serializers.ValidationError("Both cash_amount and bank_amount are required for cash-bank payment method.")
-                if data['cash_amount'] <= 0 or data['bank_amount'] <= 0:
-                    raise serializers.ValidationError("cash_amount and bank_amount must be greater than 0.")
+                data['cash_amount'] = data.get('cash_amount', 0)  # Default to 0 if not provided
+                data['bank_amount'] = data.get('bank_amount', 0)  # Default to 0 if not provided
 
             if payment_method == 'credit':
                 if 'credit_user_id' not in data:
@@ -223,6 +229,8 @@ class OrderStatusUpdateSerializer(serializers.Serializer):
                         raise serializers.ValidationError("Selected credit user is not active.")
                 except CreditUser.DoesNotExist:
                     raise serializers.ValidationError("Invalid credit_user_id.")
+                data['cash_amount'] = 0  # Ensure cash_amount is 0 for credit payment method
+                data['bank_amount'] = 0  # Ensure bank_amount is 0 for credit payment method
         
         return data
 
@@ -233,16 +241,26 @@ class OrderStatusUpdateSerializer(serializers.Serializer):
         if instance.status == 'delivered':
             instance.payment_method = validated_data.get('payment_method', instance.payment_method)
 
+            if instance.payment_method == 'cash':
+                instance.cash_amount = validated_data.get('cash_amount', 0)  # Default to 0 if not provided
+                instance.bank_amount = 0  # Reset bank_amount if payment is cash-only
+
+            if instance.payment_method == 'bank':
+                instance.bank_amount = validated_data.get('bank_amount', 0)  # Default to 0 if not provided
+                instance.cash_amount = 0  # Reset cash_amount if payment is bank-only
+
             if instance.payment_method == 'cash-bank':
-                instance.cash_amount = validated_data.get('cash_amount', instance.cash_amount)
-                instance.bank_amount = validated_data.get('bank_amount', instance.bank_amount)
+                instance.cash_amount = validated_data.get('cash_amount', 0)  # Default to 0 if not provided
+                instance.bank_amount = validated_data.get('bank_amount', 0)  # Default to 0 if not provided
 
             if instance.payment_method == 'credit':
                 instance.credit_user_id = validated_data.get('credit_user_id', instance.credit_user_id)
+                instance.cash_amount = 0  # Reset cash_amount if payment is credit
+                instance.bank_amount = 0  # Reset bank_amount if payment is credit
 
         instance.save()
         return instance
-    
+
     
 class BillSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)

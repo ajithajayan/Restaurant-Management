@@ -67,7 +67,9 @@ const OrderCard: React.FC<OrderCardProps> = ({
     content: () => salesPrintRef.current,
   });
 
-  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusChange = async (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     const newStatus = e.target.value;
     setStatus(newStatus);
 
@@ -217,23 +219,73 @@ const OrderCard: React.FC<OrderCardProps> = ({
 
   const handlePaymentSubmit = async () => {
     try {
-      // Prepare the payload to send to the API
-      const additionalData = {
-        payment_method: paymentMethod,
-        cash_amount: paymentMethod === "cash-bank" ? cashAmount : undefined,
-        bank_amount: paymentMethod === "cash-bank" ? bankAmount : undefined,
-      };
-
+      let additionalData;
+  
+      // Prepare the payload based on the selected payment method
+      if (paymentMethod === "cash") {
+        additionalData = {
+          payment_method: "cash",
+          cash_amount: order.total_amount, // Set the entire amount to cash
+          bank_amount: 0, // Explicitly set to 0 to avoid NULL constraint issues
+        };
+      } else if (paymentMethod === "bank") {
+        additionalData = {
+          payment_method: "bank",
+          cash_amount: 0, // Explicitly set to 0
+          bank_amount: order.total_amount, // Set the entire amount to bank
+        };
+      } else if (paymentMethod === "cash-bank") {
+        additionalData = {
+          payment_method: "cash-bank",
+          cash_amount: cashAmount,
+          bank_amount: bankAmount,
+        };
+      } else if (paymentMethod === "credit") {
+        additionalData = {
+          payment_method: "credit",
+          cash_amount: 0, // Explicitly set to 0
+          bank_amount: 0, // Explicitly set to 0
+          credit_user_id: selectedCreditUser
+            ? selectedCreditUser.id
+            : undefined,
+        };
+      }
+  
       // Send the updated status and additional payment-related data to the API
-      await updateOrderStatusNew(order.id, "delivered", additionalData);
-
+      
+      const response = await updateOrderStatusNew(order.id, "delivered", additionalData);
+      console.log("order",order)
+      if (response && response.detail) {  // Ensure the API call was successful
+        // Call the bills API after successful status update
+        const billsResponse = await api.post("/bills/", {
+          order: order.id,
+          total_amount: order.total_amount,
+          paid: true,
+        });
+  
+        if (billsResponse && billsResponse.status === 201) {
+          setShowPaymentModal(false);
+          setStatus("delivered");
+          disableAllActions();
+  
+          // Trigger the print confirmation modal
+          setShowPrintConfirmationModal(true);
+  
+          // Trigger the order list refresh after payment submission
+          onStatusUpdated(); // Refresh orders after status change
+        } else {
+          throw new Error("Failed to create the bill");
+        }
+      } else {
+        throw new Error("Failed to update the order status");
+      }
       setShowPaymentModal(false);
       setStatus("delivered");
       disableAllActions();
-
+  
       // Trigger the print confirmation modal
       setShowPrintConfirmationModal(true);
-
+  
       // Trigger the order list refresh after payment submission
       onStatusUpdated(); // Refresh orders after status change
     } catch (error) {
@@ -245,6 +297,8 @@ const OrderCard: React.FC<OrderCardProps> = ({
       );
     }
   };
+  
+  
 
   const handlePrintConfirmation = () => {
     setBillType("sales");
@@ -523,7 +577,9 @@ const OrderCard: React.FC<OrderCardProps> = ({
             {paymentMethod === "cash-bank" && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-gray-700 mb-1">Cash Amount</label>
+                  <label className="block text-gray-700 mb-1">
+                    Cash Amount
+                  </label>
                   <input
                     type="number"
                     value={cashAmount}
@@ -534,7 +590,9 @@ const OrderCard: React.FC<OrderCardProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-1">Bank Amount</label>
+                  <label className="block text-gray-700 mb-1">
+                    Bank Amount
+                  </label>
                   <input
                     type="number"
                     value={bankAmount}
