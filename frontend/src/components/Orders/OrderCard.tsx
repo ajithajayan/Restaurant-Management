@@ -6,7 +6,7 @@ import SalesPrint from "./SalesPrint";
 import OrderItems from "./OrderItems";
 import AddProductModal from "./AddProductModal";
 import PrintConfirmationModal from "./PrintConfirmationModal";
-import { updateOrderStatusNew } from "../../services/api";
+import { api, updateOrderStatusNew } from "../../services/api";
 
 const OrderCard = ({
   order: initialOrder,
