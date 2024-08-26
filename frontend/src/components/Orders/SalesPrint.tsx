@@ -28,16 +28,27 @@ const SalesPrint: React.FC<SalesPrintProps> = ({ order, dishes }) => {
       <div className="print-date mb-2">Date: {formatDate(order.created_at)}</div>
       <div className="print-time mb-2">Time: {formatTime(order.created_at)}</div>
       <div className="print-items">
-        {order.items.map((item, index) => {
-          const dish = dishes.find(dish => dish.id === item.dish);
-          return (
-            <div key={index} className="print-item flex justify-between mb-1">
-              <span className="print-item-name">{dish ? dish.name : 'Unknown Dish'}</span>
-              <span className="print-item-quantity">{item.quantity}x</span>
-              <span className="print-item-price">QAR {dish ? dish.price * item.quantity : 0}</span>
-            </div>
-          );
-        })}
+        <table className="w-full">
+          <thead>
+            <tr>
+              <th className="text-left">Item</th>
+              <th className="text-center">Qty</th>
+              <th className="text-right">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {order.items.map((item, index) => {
+              const dish = dishes.find(dish => dish.id === item.dish);
+              return (
+                <tr key={index} className="print-item">
+                  <td className="print-item-name">{dish ? dish.name : 'Unknown Dish'}</td>
+                  <td className="print-item-quantity text-center">x{item.quantity}</td>
+                  <td className="print-item-price text-right">QAR {dish ? dish.price * item.quantity : 0}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
       <div className="print-summary mt-4 text-right">
         <div className="print-total-quantity">Total Quantity: {totalQuantity}</div>
