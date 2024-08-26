@@ -26,12 +26,12 @@ const MessPage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="p-4 bg-[#52088E] min-h-screen">
+      <div className="p-4 bg-gray-100 min-h-screen">
         <header className="bg-white p-4 shadow-md rounded-md mb-4">
           <div className="flex justify-around">
             <button
               className={`py-2 px-4 rounded ${
-                activeButton === "Menus" ? "bg-blue-700 text-white" : "bg-blue-500 text-white hover:bg-blue-700"
+                activeButton === "Menus" ? "bg-black text-white" : "bg-zinc-600 text-white hover:bg-gray-500"
               }`}
               onClick={() => handleButtonClick("Menus")}
             >
@@ -39,7 +39,7 @@ const MessPage: React.FC = () => {
             </button>
             <button
               className={`py-2 px-4 rounded ${
-                activeButton === "Custom Menus" ? "bg-blue-700 text-white" : "bg-blue-500 text-white hover:bg-blue-700"
+                activeButton === "Add Members" ? "bg-black text-white" : "bg-zinc-600 text-white hover:bg-gray-500"
               }`}
               onClick={() => handleButtonClick("Add Members")}
             >
@@ -47,7 +47,7 @@ const MessPage: React.FC = () => {
             </button>
             <button
               className={`py-2 px-4 rounded ${
-                activeButton === "Mess Members" ? "bg-blue-700 text-white" : "bg-blue-500 text-white hover:bg-blue-700"
+                activeButton === "Mess Members" ? "bg-black text-white" : "bg-zinc-600 text-white hover:bg-gray-500"
               }`}
               onClick={() => handleButtonClick("Mess Members")}
             >

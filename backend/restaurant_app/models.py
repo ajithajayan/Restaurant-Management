@@ -1,5 +1,5 @@
 from datetime import timedelta
-from django.db import models
+from django.db import models,transaction
 from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -353,7 +353,7 @@ class Mess(models.Model):
     ]
 
     customer_name = models.CharField(max_length=50, unique=True)
-    mobile_number = models.CharField(max_length=15, blank=True)
+    mobile_number = models.CharField(max_length=15, unique=True)
     start_date = models.DateField()
     end_date = models.DateField()
     mess_type = models.ForeignKey(
@@ -372,26 +372,93 @@ class Mess(models.Model):
     bank_amount = models.DecimalField(
         max_digits=10, decimal_places=2, default=0.00
     )  # Add bank_amount field on 21-08-2024
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    initial_transaction_created = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.customer_name}'s Mess Selection"
 
-    def calculate_total_amount(self):
-        total = sum(menu.sub_total for menu in self.menus.all())
-        self.total_amount = total
-
-    def is_valid(self):
-        """
-        Check if the Mess is currently valid based on the start and expire dates.
-        """
-        today = timezone.now().date()
-        if self.start_date and self.end_date:
-            return self.start_date <= today <= self.end_date
-        return True
-
     class Meta:
         unique_together = ("mess_type", "customer_name")
 
+
+
+class Transaction(models.Model):
+    STATUS_CHOICES = [
+        ('due', 'Due'),
+        ('completed', 'Completed'),
+    ]
+    PAYMENT_METHOD_CHOICES = [
+        ("cash", "Cash"),
+        ("bank", "Bank"),
+        ("cash-bank", "Cash and Bank"),
+    ]
+
+
+    date = models.DateField(auto_now_add=True)
+    received_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+    cash_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  
+    bank_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  
+    payment_method = models.CharField(
+        max_length=20, choices=PAYMENT_METHOD_CHOICES, default="cash"
+    )
+    mess = models.ForeignKey(
+        'Mess', related_name='transactions', on_delete=models.CASCADE, blank=True, null=True
+    )
+
+    def __str__(self):
+        return f"Transaction on {self.date} - {self.status}"
+
+transaction_creation = False
+
+@receiver(post_save, sender=Mess)
+def create_initial_transaction(sender, instance, created, **kwargs):
+    global transaction_creation
+    if created and not instance.initial_transaction_created:
+        transaction_creation = True
+        status = 'completed' if instance.pending_amount == 0 else 'due'
+        
+        try:
+            with transaction.atomic():
+                # Create the initial Transaction entry
+                Transaction.objects.create(
+                    received_amount=instance.paid_amount,
+                    status=status,
+                    cash_amount=instance.cash_amount,
+                    bank_amount=instance.bank_amount,
+                    payment_method=instance.payment_method,
+                    mess=instance
+                )
+                # Set the flag to True
+                instance.initial_transaction_created = True
+                instance.save()
+        except Exception as e:
+            print(f"Error creating initial transaction: {e}")
+        finally:
+            transaction_creation = False
+
+
+@receiver(post_save, sender=Transaction)
+def update_mess_on_transaction_save(sender, instance, **kwargs):
+    if transaction_creation:
+        return  # Skip updating Mess if a transaction is being created
+
+    mess = instance.mess
+    if mess:
+        try:
+            with transaction.atomic():
+                # Update Mess fields based on the Transaction
+                mess.pending_amount -= instance.received_amount
+                mess.paid_amount += instance.received_amount
+                mess.cash_amount += instance.cash_amount
+                mess.bank_amount += instance.bank_amount
+                
+                # Ensure Mess is saved only if changes are actually made
+                mess.save()
+        except Exception as e:
+            print(f"Error updating mess on transaction save: {e}")
 
 class CreditUser(models.Model):
     username = models.CharField(max_length=100)

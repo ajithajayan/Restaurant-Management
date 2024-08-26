@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { api } from "@/services/api";
 import Layout from "../components/Layout/Layout";
 import Table from "../components/DiningTable/Table";
 import FloorSelector from "../components/DiningTable/FloorSelector";
@@ -31,7 +31,7 @@ const DiningTablePage: React.FC = () => {
   useEffect(() => {
     const fetchFloors = async () => {
       try {
-        const response = await axios.get<Floor[]>('http://127.0.0.1:8000/api/floors');
+        const response = await api.get<Floor[]>('/floors');
         setFloors(response.data);
         if (response.data.length > 0) {
           setSelectedFloor(response.data[0].id);
@@ -49,7 +49,7 @@ const DiningTablePage: React.FC = () => {
     if (selectedFloor !== null) {
       setLoading(true);
       try {
-        const response = await axios.get<{ results: Table[] }>(`http://127.0.0.1:8000/api/tables?floor=${selectedFloor}`);
+        const response = await api.get<{ results: Table[] }>(`/tables?floor=${selectedFloor}`);
         setTables(response.data.results);
         setError(null);
       } catch (error) {

@@ -160,8 +160,10 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
     def update(self, instance, validated_data):
+        
         items_data = validated_data.pop("items", None)
-
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
         # Start by resetting the total amount to 0
         total_amount = 0
 
@@ -324,6 +326,10 @@ class MenuSerializer(serializers.ModelSerializer):
 
 
 class MessSerializer(serializers.ModelSerializer):
+    mess_type = MessTypeSerializer(read_only=True) 
+    mess_type_id = serializers.PrimaryKeyRelatedField(
+        queryset=MessType.objects.all(), write_only=True, source='mess_type'
+    ) 
     class Meta:
         model = Mess
         fields = [
@@ -341,6 +347,8 @@ class MessSerializer(serializers.ModelSerializer):
             "paid_amount",
             "pending_amount",
             "menus",
+            "discount_amount",
+            "grand_total"
         ]
 
 
@@ -364,3 +372,8 @@ class CreditUserSerializer(serializers.ModelSerializer):
             "is_active",
             "credit_orders",
         ]
+class TransactionSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Transaction
+        fields = ['id', 'received_amount', 'status', 'cash_amount', 'bank_amount', 'payment_method', 'mess','date']

@@ -143,6 +143,24 @@ class OrderViewSet(viewsets.ModelViewSet):
             start_date = end_date - timedelta(days=30)
 
         return self.queryset.filter(created_at__range=(start_date, end_date))
+    
+    @action(detail=False, methods=["get"])
+    def user_order_history(self, request):
+        customer_phone_number = request.query_params.get("customer_phone_number", None)
+        
+        # Initialize queryset
+        queryset = self.get_queryset()
+        
+        # If customer_phone_number is provided, filter the queryset
+        if customer_phone_number:
+            queryset = queryset.filter(customer_phone_number=customer_phone_number)
+        else:
+            # Return an empty queryset if no customer_phone_number is provided
+            queryset = queryset.none()
+        
+        # Serialize and return the response
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"])  # Update on 21-08-2024
     def sales_report(self, request):
@@ -560,3 +578,14 @@ class CreditOrderViewSet(viewsets.ModelViewSet):
     queryset = CreditOrder.objects.all()
     serializer_class = CreditOrderSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+class TransactionViewSet(viewsets.ModelViewSet):
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        mess_id = self.request.query_params.get('mess_id', None)
+        if mess_id is not None:
+            queryset = queryset.filter(mess_id=mess_id)
+        return queryset

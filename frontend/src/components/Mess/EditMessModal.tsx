@@ -59,26 +59,6 @@ const EditMessModal: React.FC<EditMessModalProps> = ({ isOpen, onClose, member, 
             className="w-full border rounded px-2 py-1"
           />
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Paid Amount</label>
-          <input
-            type="text"
-            name="paid_amount"
-            value={formData.paid_amount}
-            onChange={handleChange}
-            className="w-full border rounded px-2 py-1"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Pending Amount</label>
-          <input
-            type="text"
-            name="pending_amount"
-            value={formData.pending_amount}
-            onChange={handleChange}
-            className="w-full border rounded px-2 py-1"
-          />
-        </div>
         <div className="flex justify-end">
           <button onClick={onClose} className="bg-gray-500 text-white py-1 px-4 rounded mr-2">
             Cancel

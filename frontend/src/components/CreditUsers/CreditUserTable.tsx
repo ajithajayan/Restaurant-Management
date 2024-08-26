@@ -116,7 +116,7 @@ export function CreditUserTable() {
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Username
+          Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
