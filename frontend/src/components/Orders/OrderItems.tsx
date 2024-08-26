@@ -4,9 +4,10 @@ import { OrderItem, Dish } from "../../types";
 interface OrderItemsProps {
   orderItem: OrderItem;
   dishes: Dish[];
+  isNewlyAdded?: boolean; // Prop to check if the item is newly added
 }
 
-const OrderItems: React.FC<OrderItemsProps> = ({ orderItem, dishes }) => {
+const OrderItems: React.FC<OrderItemsProps> = ({ orderItem, dishes, isNewlyAdded }) => {
   const dish = dishes.find(d => d.id === orderItem.dish);
 
   if (!dish) {
@@ -29,7 +30,11 @@ const OrderItems: React.FC<OrderItemsProps> = ({ orderItem, dishes }) => {
   }
 
   return (
-    <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+    <div
+      className={`flex items-center justify-between bg-gray-50 p-3 rounded-lg ${
+        isNewlyAdded ? "border-2 border-green-500" : ""
+      }`}
+    >
       <div className="flex items-center space-x-4">
         <img
           src={dish.image}
@@ -37,12 +42,17 @@ const OrderItems: React.FC<OrderItemsProps> = ({ orderItem, dishes }) => {
           className="w-16 h-16 object-cover rounded"
         />
         <div>
-          <h4 className="font-semibold">{dish.name}</h4>
+          <h4 className={`font-semibold ${isNewlyAdded ? "text-green-600" : ""}`}>
+            {dish.name}
+          </h4>
           <p className="text-sm text-gray-600">Quantity: {orderItem.quantity}</p>
+          {isNewlyAdded && <span className="text-xs text-green-600">Newly Added</span>}
         </div>
       </div>
       <div className="text-right">
-        <p className="font-semibold">QAR {(dish.price * orderItem.quantity).toFixed(2)}</p>
+        <p className="font-semibold">
+          QAR {(dish.price * orderItem.quantity).toFixed(2)}
+        </p>
         <p className="text-sm text-gray-600">QAR {dish.price} each</p>
       </div>
     </div>

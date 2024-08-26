@@ -107,7 +107,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ["dish", "quantity"]
+        fields = ["dish", "quantity","is_newly_added"]
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -174,6 +174,7 @@ class OrderSerializer(serializers.ModelSerializer):
         # Add new items' total amount
         if items_data:
             for item_data in items_data:
+                item_data['is_newly_added'] = True  # Marking as newly added
                 order_item = OrderItem.objects.create(order=instance, **item_data)
                 total_amount += order_item.quantity * order_item.dish.price
         
