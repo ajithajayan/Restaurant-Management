@@ -46,7 +46,7 @@ const AddMembers: React.FC = () => {
   const [grandTotal, setGrandTotal] = useState<number>(0);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false); // State for modal visibility
   const [responseData, setResponseData] = useState<any>(null); // State for response data
-
+  const [isPendingManuallyEdited, setIsPendingManuallyEdited] = useState(false);
 
   useEffect(() => {
     axios
@@ -84,6 +84,14 @@ const AddMembers: React.FC = () => {
     setGrandTotal(grandTotal);
   }, [totalAmount, discountAmount]);
 
+  // Automatically calculate pending amount if not manually edited
+  useEffect(() => {
+    if (!isPendingManuallyEdited) {
+      const pending = grandTotal - parseFloat(paidAmount || "0");
+      setPendingAmount(pending.toFixed(2));
+    }
+  }, [paidAmount, grandTotal, discountAmount, isPendingManuallyEdited]);
+
   useEffect(() => {
     if (startDate && selectedWeek) {
       const start = new Date(startDate);
@@ -96,6 +104,11 @@ const AddMembers: React.FC = () => {
   const handleDiscountAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setDiscountAmount(value);
+  };
+
+  const handlePendingAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPendingAmount(e.target.value);
+    setIsPendingManuallyEdited(true);
   };
 
   const menuIds = menuType === "own_menu"
@@ -297,7 +310,7 @@ const AddMembers: React.FC = () => {
               id="pendingAmount"
               type="text"
               value={pendingAmount}
-              onChange={(e) => setPendingAmount(e.target.value)}
+              onChange={handlePendingAmountChange}
               pattern="[0-9]*"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
@@ -426,7 +439,7 @@ const AddMembers: React.FC = () => {
         {/* Submit button */}
         <button
           type="submit"
-          className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mt-4"
+          className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#6f42c1] transition-all mt-4 hover:bg-purple-600"
         >
           Submit
         </button>

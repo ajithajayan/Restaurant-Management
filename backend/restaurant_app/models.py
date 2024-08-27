@@ -462,9 +462,11 @@ def update_mess_on_transaction_save(sender, instance, **kwargs):
 
 class CreditUser(models.Model):
     username = models.CharField(max_length=100)
+    mobile_number = models.CharField(max_length=10, unique=True)
     last_payment_date = models.DateTimeField(default=timezone.now)
     time_period = models.DateTimeField(default=default_time_period)
     total_due = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    limit_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True)
 
     class Meta:

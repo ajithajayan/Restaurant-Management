@@ -83,22 +83,10 @@ const OrderCard: React.FC<OrderCardProps> = ({
         console.error("Error updating status to approved:", error);
         Swal.fire("Error", "Failed to update status to approved.", "error");
       }
-    } else if (newStatus === "delivered") {
-      Swal.fire({
-        title: "Choose Payment Method",
-        text: "Please select a payment method before confirming the order.",
-        icon: "info",
-        showCancelButton: true,
-        confirmButtonText: "Proceed",
-        cancelButtonText: "Cancel",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          setShowPaymentModal(true);
-        } else {
-          setStatus(order.status); // Revert to previous status if canceled
-        }
-      });
-    } else if (newStatus === "cancelled") {
+    }else if (newStatus === "delivered") {
+      setShowPaymentModal(true);
+    }
+     else if (newStatus === "cancelled") {
       Swal.fire({
         title: "Are you sure?",
         text: "Do you want to cancel the order?",
