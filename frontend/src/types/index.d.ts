@@ -320,6 +320,8 @@ export type CreditUser = {
 
 export type CreditUserForm = {
   username: string;
+  mobile_number:string;
+  limit_amount:string;
   time_period: Date | null,
   is_active: boolean,
 }

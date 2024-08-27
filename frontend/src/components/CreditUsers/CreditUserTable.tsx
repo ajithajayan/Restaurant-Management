@@ -34,6 +34,7 @@ import { CreditPaymentModal } from "../modals/CreditPaymentModal";
 interface CreditUser {
   id: number;
   username: string;
+  mobile_number: string;
   last_payment_date: string;
   total_due: number;
   is_active: boolean;
@@ -67,6 +68,13 @@ export function CreditUserTable() {
       console.error("Error fetching credit users:", error);
     }
   };
+
+  const filterFn = (row: any, columnId: string, value: string) => {
+    const usernameMatch = row.getValue("username").toLowerCase().includes(value.toLowerCase());
+    const mobileNumberMatch = row.getValue("mobile_number").includes(value);
+    return usernameMatch || mobileNumberMatch;
+  };
+
 
   const handleAddCreditUser = () => {
     setSelectedCreditUserId(null);
@@ -121,6 +129,21 @@ export function CreditUserTable() {
         </Button>
       ),
       cell: ({ row }: any) => <div>{row.getValue("username")}</div>,
+      filterFn
+    },
+    {
+      accessorKey: "mobile_number",
+      header: ({ column }: any) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Mobile No
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }: any) => <div>{row.getValue("mobile_number")}</div>,
+      filterFn,
     },
     {
       accessorKey: "last_payment_date",
@@ -151,13 +174,24 @@ export function CreditUserTable() {
       },
     },
     {
+      accessorKey: "limit_amount",
+      header: () => <div className="text-right">Limit Amount</div>,
+      cell: ({ row }: any) => {
+        const amount = parseFloat(row.getValue("limit_amount"));
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "QAR",
+        }).format(amount);
+        return <div className="text-right font-medium">{formatted}</div>;
+      },
+    },
+    {
       accessorKey: "is_active",
       header: "Status",
       cell: ({ row }: any) => (
         <div
-          className={`font-medium ${
-            row.getValue("is_active") ? "text-green-600" : "text-red-600"
-          }`}
+          className={`font-medium ${row.getValue("is_active") ? "text-green-600" : "text-red-600"
+            }`}
         >
           {row.getValue("is_active") ? "Active" : "Inactive"}
         </div>
@@ -225,15 +259,16 @@ export function CreditUserTable() {
     <div className="w-full">
       <div className="flex items-center justify-between py-4">
         <Input
-          placeholder="Filter credit users..."
-          value={
-            (table.getColumn("username")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn("username")?.setFilterValue(event.target.value)
-          }
+          placeholder="Filter by name or mobile..."
+          value={(table.getColumn("username")?.getFilterValue() as string) ?? ""}
+          onChange={(event) => {
+            const value = event.target.value;
+            table.getColumn("username")?.setFilterValue(value);
+            table.getColumn("mobile_number")?.setFilterValue(value);
+          }}
           className="max-w-sm"
         />
+
         <Button
           onClick={handleAddCreditUser}
           className="flex items-center justify-center gap-2"
@@ -252,9 +287,9 @@ export function CreditUserTable() {
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 ))}
               </TableRow>

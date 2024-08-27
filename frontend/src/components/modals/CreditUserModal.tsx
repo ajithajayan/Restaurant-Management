@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { startOfToday } from 'date-fns';
+
 import {
   Dialog,
   DialogContent,
@@ -36,6 +38,8 @@ export function CreditUserModal({
 }: CreditUserModalProps) {
   const [creditUser, setCreditUser] = useState<CreditUserForm>({
     username: "",
+    mobile_number: "",
+    limit_amount:"",
     time_period: null,
     is_active: true,
   });
@@ -67,6 +71,8 @@ export function CreditUserModal({
   const resetForm = () => {
     setCreditUser({
       username: "",
+      mobile_number: "",
+      limit_amount:"",
       time_period: null,
       is_active: true,
     });
@@ -115,9 +121,10 @@ export function CreditUserModal({
           <DialogDescription></DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="username" className="text-right">
+          <div className="grid gap-6 py-4">
+            {/* Name Field */}
+            <div className="grid gap-2">
+              <Label htmlFor="username" className="text-left">
                 Name
               </Label>
               <Input
@@ -129,17 +136,48 @@ export function CreditUserModal({
                 required
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="time_period" className="text-right">
+
+            {/* Mobile No Field */}
+            <div className="grid gap-2">
+              <Label htmlFor="mobile_number" className="text-left">
+                Mobile No
+              </Label>
+              <Input
+                id="mobile_number"
+                name="mobile_number"
+                value={creditUser.mobile_number}
+                onChange={handleInputChange}
+                className="col-span-3"
+                required
+              />
+            </div>
+
+            {/* Limit Amount Field */}
+            <div className="grid gap-2">
+              <Label htmlFor="mobile_number" className="text-left">
+                Limit Amount
+              </Label>
+              <Input
+                id="limit_amount"
+                name="limit_amount"
+                value={creditUser.limit_amount}
+                onChange={handleInputChange}
+                className="col-span-3"
+                required
+              />
+            </div>
+
+            {/* Time Period Field */}
+            <div className="grid gap-2">
+              <Label htmlFor="time_period" className="text-left">
                 Time Period
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className={`col-span-3 justify-start text-left font-normal ${
-                      selectedDate ? "" : "text-muted-foreground"
-                    }`}
+                    className={`col-span-3 justify-start text-left font-normal ${selectedDate ? "" : "text-muted-foreground"
+                      }`}
                   >
                     {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
                   </Button>
@@ -149,13 +187,16 @@ export function CreditUserModal({
                     mode="single"
                     selected={selectedDate || undefined}
                     onSelect={handleDateChange}
+                    fromDate={startOfToday()} // Restrict selection to today and future dates
                     initialFocus
                   />
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="is_active" className="text-right">
+
+            {/* Active Field */}
+            <div className="grid gap-2">
+              <Label htmlFor="is_active" className="text-left">
                 Active
               </Label>
               <Checkbox
@@ -169,6 +210,7 @@ export function CreditUserModal({
               />
             </div>
           </div>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
@@ -176,6 +218,7 @@ export function CreditUserModal({
             <Button type="submit">Save</Button>
           </DialogFooter>
         </form>
+
       </DialogContent>
     </Dialog>
   );

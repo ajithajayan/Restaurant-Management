@@ -26,12 +26,13 @@ const Menus: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const messTypeMap: { [key: number]: string } = {
-    1: 'breakfast_lunch_dinner',
-    2: 'breakfast_lunch',
-    3: 'breakfast_dinner',
-    4: 'lunch_dinner'
+  const messTypeMap: { [key: number]: { name: string; type: string } } = {
+    1: { name: 'Breakfast Lunch Dinner', type: 'breakfast_lunch_dinner' },
+    2: { name: 'Breakfast Lunch', type: 'breakfast_lunch' },
+    3: { name: 'Breakfast Dinner', type: 'breakfast_dinner' },
+    4: { name: 'Lunch Dinner', type: 'lunch_dinner' }
   };
+
 
   useEffect(() => {
     const fetchMenus = async () => {
@@ -74,21 +75,21 @@ const Menus: React.FC = () => {
           <button
             key={key}
             onClick={() => handleFilterChange(Number(key))}
-            className={`py-2 px-4 rounded-md ${
-              filter === Number(key) ? 'bg-black text-white' : 'bg-gray-200'
-            }`}
+            className={`py-2 px-4 rounded-md ${filter === Number(key) ? 'bg-[#6f42c1] text-white transition-all' : 'bg-gray-200'
+              }`}
           >
-            {value}
+            {value.name}
           </button>
         ))}
       </div>
+
 
       {filteredMenus.length === 0 && <div>No menus available for this filter.</div>}
       {filteredMenus.map((menu, index) => (
         <div key={index} className="bg-gray-100 p-4 rounded-md shadow-md">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">{menu.day_of_week}</h2>
-            <p className="text-lg font-semibold">{menu.sub_total}</p>
+            <p className="text-lg font-semibold">QAR{menu.sub_total}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {menu.menu_items.map((meal, mealIndex) => (
@@ -98,19 +99,27 @@ const Menus: React.FC = () => {
               >
                 <h3 className="text-lg font-bold mb-2">{meal.meal_type}</h3>
                 {meal.dish.image ? (
-                  <img
-                    src={meal.dish.image}
-                    alt={meal.dish.name}
-                    className="w-full h-auto object-cover rounded-md mb-2"
-                  />
+                  <div className="w-full h-48 bg-gray-200 rounded-md mb-2 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={meal.dish.image}
+                      alt={meal.dish.name}
+                      className="w-full h-full object-cover object-center"
+                    />
+                  </div>
                 ) : (
-                  <div className="w-full h-32 bg-gray-200 rounded-md mb-2 flex items-center justify-center">
+                  <div className="w-full h-48 bg-gray-200 rounded-md mb-2 flex items-center justify-center">
                     <p>No Image Available</p>
                   </div>
                 )}
-                <p className="text-center">
-                  Dish: {meal.dish.name} <span className="text-sm text-gray-500">(${meal.dish.price})</span>
-                </p>
+                <div className="flex justify-between w-full">
+                  <p className="text-lg font-bold">
+                    {meal.dish.name}
+                  </p>
+                  <p className="text-lg font-bold text-gray-800">
+                    QAR{meal.dish.price}
+                  </p>
+                </div>
+
               </div>
             ))}
           </div>

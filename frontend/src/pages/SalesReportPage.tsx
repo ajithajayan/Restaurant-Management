@@ -230,6 +230,8 @@ const SalesReportPage: React.FC = () => {
         case "Cash-Bank":
           filter = { payment_method: "cash-bank" };
           break;
+        case "Credit":
+          filter = { payment_method: "credit"};
         case "Canceled":
           filter = { order_status: "cancelled" };
           break;
@@ -404,6 +406,12 @@ const SalesReportPage: React.FC = () => {
                 className={`p-2 rounded ${activeButton === "Cash-Bank" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
               >
                 Cash-Bank
+              </button>
+              <button
+                onClick={() => handleButtonClick("Credit")}
+                className={`p-2 rounded ${activeButton === "Credit" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+              >
+                Credit
               </button>
               <button
                 onClick={() => handleButtonClick("Canceled")}

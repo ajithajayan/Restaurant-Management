@@ -31,7 +31,7 @@ const MessPage: React.FC = () => {
           <div className="flex justify-around">
             <button
               className={`py-2 px-4 rounded ${
-                activeButton === "Menus" ? "bg-black text-white" : "bg-zinc-600 text-white hover:bg-gray-500"
+                activeButton === "Menus" ? "bg-[#6f42c1] text-white transition-all" : "bg-purple-400 text-white hover:bg-purple-600"
               }`}
               onClick={() => handleButtonClick("Menus")}
             >
@@ -39,7 +39,7 @@ const MessPage: React.FC = () => {
             </button>
             <button
               className={`py-2 px-4 rounded ${
-                activeButton === "Add Members" ? "bg-black text-white" : "bg-zinc-600 text-white hover:bg-gray-500"
+                activeButton === "Add Members" ?  "bg-[#6f42c1] text-white transition-all" : "bg-purple-400 text-white hover:bg-purple-600"
               }`}
               onClick={() => handleButtonClick("Add Members")}
             >
@@ -47,7 +47,7 @@ const MessPage: React.FC = () => {
             </button>
             <button
               className={`py-2 px-4 rounded ${
-                activeButton === "Mess Members" ? "bg-black text-white" : "bg-zinc-600 text-white hover:bg-gray-500"
+                activeButton === "Mess Members" ?  "bg-[#6f42c1] text-white transition-all" : "bg-purple-400 text-white hover:bg-purple-600"
               }`}
               onClick={() => handleButtonClick("Mess Members")}
             >

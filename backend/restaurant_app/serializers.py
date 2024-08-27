@@ -384,11 +384,13 @@ class CreditUserSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "username",
+            "mobile_number",
             "last_payment_date",
             "time_period",
             "total_due",
             "is_active",
             "credit_orders",
+            "limit_amount"
         ]
 class TransactionSerializer(serializers.ModelSerializer):
     
