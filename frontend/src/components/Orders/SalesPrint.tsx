@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Order, Dish } from "../../types";
 
 interface SalesPrintProps {
@@ -7,6 +8,27 @@ interface SalesPrintProps {
 }
 
 const SalesPrint: React.FC<SalesPrintProps> = ({ order, dishes }) => {
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/api/logo-info/");
+        const results = response.data.results;
+        if (results && results.length > 0) {
+          setLogoUrl(results[0].print_logo);  // Assuming the first result is what you want
+        } else {
+          setLogoUrl("/path/to/default/logo.png"); // Set a default logo if no results
+        }
+      } catch (error) {
+        console.error("Failed to fetch logo info:", error);
+        setLogoUrl("/path/to/default/logo.png"); // Set a default logo in case of error
+      }
+    };
+
+    fetchLogo();
+  }, []);
+
   const formatDate = (datetime: string) => {
     const date = new Date(datetime);
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -23,8 +45,18 @@ const SalesPrint: React.FC<SalesPrintProps> = ({ order, dishes }) => {
 
   return (
     <div className="print-container w-64 p-4 text-sm bg-white border-2 border-dashed rounded-lg mx-auto">
+      {/* Display the logo at the top */}
+      <div className="flex justify-center mb-4">
+        {logoUrl && <img src={logoUrl} alt="Logo" className="h-16 w-auto" />}
+      </div>
+
       <h1 className="text-center text-lg font-bold mb-2">Sales Receipt</h1>
-      <div className="print-order-id mb-2">Order_id #{order.id}</div>
+      <div className="flex justify-between mb-2">
+        <div className="print-order-id">Order_id #{order.id}</div>
+        {order.payment_method === "credit" && (
+          <div className="text-right font-bold text-red-500 ml-4">Credit</div>
+        )}
+      </div>
       <div className="print-date mb-2">Date: {formatDate(order.created_at)}</div>
       <div className="print-time mb-2">Time: {formatTime(order.created_at)}</div>
       <div className="print-items">
@@ -52,11 +84,11 @@ const SalesPrint: React.FC<SalesPrintProps> = ({ order, dishes }) => {
       </div>
       <div className="print-summary mt-4">
         <div className="flex justify-between">
-          <span >Total Quantity:</span>
-          <span className="font-bold">{totalQuantity} </span>
+          <span>Total Quantity:</span>
+          <span className="font-bold">{totalQuantity}</span>
         </div>
         <div className="flex justify-between mt-2">
-          <span >Total Amount:</span>
+          <span>Total Amount:</span>
           <span className="font-bold">QAR {order.total_amount}</span>
         </div>
       </div>

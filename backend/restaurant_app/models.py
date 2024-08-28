@@ -43,6 +43,18 @@ class User(AbstractUser):
 
         super().save(*args, **kwargs)
 
+class LogoInfo(models.Model):
+    company_name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=20)
+    location = models.CharField(max_length=255)
+    office_number = models.CharField(max_length=20)
+    main_logo = models.ImageField(upload_to='company_logos/')
+    side_logo = models.ImageField(upload_to='company_logos/')
+    print_logo = models.ImageField(upload_to='company_logos/')
+
+    def __str__(self):
+        return self.company_name        
+
 
 class Category(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -513,3 +525,7 @@ class CreditOrder(models.Model):
 
     def __str__(self):
         return f"Credit Order for Order {self.order.id}"
+    
+
+
+

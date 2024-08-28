@@ -2,22 +2,34 @@ import React, { useState, useRef } from "react";
 import Swal from "sweetalert2";
 import { Order, Dish, CreditUser } from "../../types";
 import OrderItems from "./OrderItems";
-import { useUpdateOrderStatus } from "../../hooks/useUpdateOrderStatus";
 import { useReactToPrint } from "react-to-print";
 import KitchenPrint from "./KitchenPrint";
 import SalesPrint from "./SalesPrint";
 import AddProductModal from "./AddProductModal";
 import PrintConfirmationModal from "./PrintConfirmationModal";
-import { api, updateOrderStatusNew } from "../../services/api";
+import { api, updateOrderStatusNew, updateOrderType } from "../../services/api";
 import ReactSelect from "react-select";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "../ui/hover-card";
-import { Button } from "../ui/button";
 import { BadgeInfo, Bike, Mail, Phone, PlusCircle } from "lucide-react";
 import { CreditUserModal } from "../modals/CreditUserModal";
+import { Button } from "../ui/button"; // Assuming you have a Button component
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"; // Assuming you have Popover components
+import { ChevronsUpDown, Check } from "lucide-react"; // Icons from lucide-react library
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../ui/command"; // Assuming you have a Command component and related subcomponents
+import { DeliveryDriver } from "@/types";
+import { useQuery } from "react-query";
+import { fetchDeliveryDrivers } from "@/services/api";
 
 interface OrderCardProps {
   order: Order;
@@ -58,6 +70,28 @@ const OrderCard: React.FC<OrderCardProps> = ({
     useState<CreditUser | null>(null);
   const [isCreditUserModalOpen, setIsCreditUserModalOpen] = useState(false);
 
+  // for changing the order type
+  const orderTypeDisplay = order?.order_type || "N/A";
+  const [showOrderTypeModal, setShowOrderTypeModal] = useState(false);
+  const [newOrderType, setNewOrderType] = useState<OrderType>(order.order_type);
+  const [customerName, setCustomerName] = useState<string>("");
+  const [deliveryAddress, setDeliveryAddress] = useState<string>("");
+  const [customerMobileNumber, setCustomerMobileNumber] = useState<string>("");
+  const [deliveryCharge, setDeliveryCharge] = useState<string>("0.00");
+  const [selectedDriver, setSelectedDriver] = useState<DeliveryDriver | null>(
+    null
+  );
+  const [openDriverSelect, setOpenDriverSelect] = useState<boolean>(false);
+
+  const {
+    data: deliveryDriversList,
+    isLoading,
+    isError,
+  } = useQuery<{ results: DeliveryDriver[] }>(
+    "deliveryDrivers",
+    fetchDeliveryDrivers
+  );
+
   // Separate print handlers
   const handlePrintKitchenBill = useReactToPrint({
     content: () => kitchenPrintRef.current,
@@ -83,10 +117,22 @@ const OrderCard: React.FC<OrderCardProps> = ({
         console.error("Error updating status to approved:", error);
         Swal.fire("Error", "Failed to update status to approved.", "error");
       }
-    }else if (newStatus === "delivered") {
-      setShowPaymentModal(true);
-    }
-     else if (newStatus === "cancelled") {
+    } else if (newStatus === "delivered") {
+      Swal.fire({
+        title: "Choose Payment Method",
+        text: "Please select a payment method before confirming the order.",
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "Proceed",
+        cancelButtonText: "Cancel",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          setShowPaymentModal(true);
+        } else {
+          setStatus(order.status); // Revert to previous status if canceled
+        }
+      });
+    } else if (newStatus === "cancelled") {
       Swal.fire({
         title: "Are you sure?",
         text: "Do you want to cancel the order?",
@@ -304,6 +350,43 @@ const OrderCard: React.FC<OrderCardProps> = ({
     onCreditUserChange();
   };
 
+  // for changing the order type
+  const handleOrderTypeChange = async () => {
+    // Prepare the payload depending on the order type
+    const deliveryData =
+      newOrderType === "delivery"
+        ? {
+            customer_name: customerName,
+            address: deliveryAddress,
+            customer_phone_number: customerMobileNumber,
+            delivery_charge: parseFloat(deliveryCharge),
+            delivery_driver_id: selectedDriver?.id,
+          }
+        : {}; // No additional data for "dining" or "takeaway"
+
+    try {
+      // Call the API to update the order type with the necessary data
+      const updatedOrder = await updateOrderType(
+        order.id,
+        newOrderType,
+        deliveryData
+      );
+
+      // Update the local state with the updated order data
+      setOrder(updatedOrder);
+
+      // Close the modal
+      setShowOrderTypeModal(false);
+
+      // Trigger a hard refresh
+      window.location.reload();
+    } catch (error) {
+      // Handle any errors that occur during the API call
+      console.error("Failed to update order type:", error);
+      Swal.fire("Error", "Failed to update order type.", "error");
+    }
+  };
+
   return (
     <div
       key={order.id}
@@ -429,7 +512,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
         ))}
       </div>
       <div className="mt-4 flex justify-between items-center">
-        {order.order_type === "delivery" && (
+        {order?.order_type === "delivery" && (
           <HoverCard>
             <HoverCardTrigger asChild>
               <Button variant="link">
@@ -441,18 +524,18 @@ const OrderCard: React.FC<OrderCardProps> = ({
               <div className="space-y-2">
                 {/* Delivery Status */}
                 <div className="flex items-center space-x-2">
-                  {order.delivery_order_status === "pending" ? (
+                  {order?.delivery_order_status === "pending" ? (
                     <span className="h-2 w-2 rounded-full bg-yellow-500" />
-                  ) : order.delivery_order_status === "delivered" ? (
+                  ) : order?.delivery_order_status === "delivered" ? (
                     <span className="h-2 w-2 rounded-full bg-green-500" />
-                  ) : order.delivery_order_status === "accepted" ||
-                    order.delivery_order_status === "in_progress" ? (
+                  ) : order?.delivery_order_status === "accepted" ||
+                    order?.delivery_order_status === "in_progress" ? (
                     <span className="h-2 w-2 rounded-full bg-indigo-500" />
                   ) : (
                     <span className="h-2 w-2 rounded-full bg-red-500" />
                   )}
                   <span className="text-sm font-semibold capitalize">
-                    {order.delivery_order_status.replace("_", " ")}
+                    {order?.delivery_order_status?.replace("_", " ")}
                   </span>
                 </div>
 
@@ -461,19 +544,19 @@ const OrderCard: React.FC<OrderCardProps> = ({
                   <div className="flex items-center space-x-2">
                     <Bike size={16} className="text-gray-500" />
                     <span className="text-sm font-medium">
-                      {order.delivery_driver.username}
+                      {order?.delivery_driver?.username}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Phone size={16} className="text-gray-500" />
                     <span className="text-sm font-medium">
-                      {order.delivery_driver.mobile_number}
+                      {order?.delivery_driver?.mobile_number}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Mail size={16} className="text-gray-500" />
                     <span className="text-sm font-medium">
-                      {order.delivery_driver.email}
+                      {order?.delivery_driver?.email}
                     </span>
                   </div>
                 </div>
@@ -482,32 +565,32 @@ const OrderCard: React.FC<OrderCardProps> = ({
                 <div className="flex flex-col justify-between items-start pt-2 border-t mt-2">
                   <div>
                     <div className="text-sm font-bold">
-                      {order.customer_phone_number}
+                      {order?.customer_phone_number}
                     </div>
-                    <div className="text-sm font-bold">{order.address}</div>
+                    <div className="text-sm font-bold">{order?.address}</div>
                   </div>
                 </div>
               </div>
             </HoverCardContent>
           </HoverCard>
-
-
         )}
-        {
-          order.order_type !== "delivery" && (
-            <button className="font-bold italic">
-            {order.order_type.charAt(0).toUpperCase() + order.order_type.slice(1)}
+
+        {order?.order_type !== "delivery" && (
+          <button
+            className="font-bold italic"
+            onClick={() => setShowOrderTypeModal(true)}
+          >
+            {order?.order_type?.charAt(0).toUpperCase() +
+              order?.order_type?.slice(1)}
           </button>
-          )
-        }
-       
+        )}
+
         <span className="text-lg font-semibold text-gray-800">
           Total: QAR {order.total_amount}
         </span>
         {/* <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
             {order.order_type}
           </h2> */}
-        
       </div>
 
       {showModal && (
@@ -664,13 +747,192 @@ const OrderCard: React.FC<OrderCardProps> = ({
           </div>
         </div>
       )}
-
+      {/* credit modal for selecting credit users */}
       <CreditUserModal
         isOpen={isCreditUserModalOpen}
         onClose={() => setIsCreditUserModalOpen(false)}
         creditUserId={null}
         onCreditUserChange={handleCreditUserCreated}
       />
+
+      {/* modal for changing the order type */}
+      {showOrderTypeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-xl w-96 transform transition-all duration-300 ease-out">
+            <h3 className="text-xl font-bold mb-6 text-gray-900">
+              Change Order Type
+            </h3>
+
+            <div className="space-y-4">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="orderType"
+                  value="dining"
+                  checked={newOrderType === "dining"}
+                  onChange={(e) => setNewOrderType(e.target.value as OrderType)}
+                  className="h-5 w-5 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2 rounded-full transition duration-200 ease-in-out"
+                />
+                <span className="text-base text-gray-700">Dining</span>
+              </label>
+
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="orderType"
+                  value="takeaway"
+                  checked={newOrderType === "takeaway"}
+                  onChange={(e) => setNewOrderType(e.target.value as OrderType)}
+                  className="h-5 w-5 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2 rounded-full transition duration-200 ease-in-out"
+                />
+                <span className="text-base text-gray-700">Takeaway</span>
+              </label>
+
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="orderType"
+                  value="delivery"
+                  checked={newOrderType === "delivery"}
+                  onChange={(e) => setNewOrderType(e.target.value as OrderType)}
+                  className="h-5 w-5 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2 rounded-full transition duration-200 ease-in-out"
+                />
+                <span className="text-base text-gray-700">Delivery</span>
+              </label>
+            </div>
+
+            {newOrderType === "delivery" && (
+              <div className="mt-6 space-y-4">
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="customerName"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Customer Name
+                  </label>
+                  <input
+                    id="customerName"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Enter customer name"
+                    className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="deliveryAddress"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Delivery Address
+                  </label>
+                  <input
+                    id="deliveryAddress"
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    placeholder="Enter delivery address"
+                    className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="customerMobileNumber"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Customer Number
+                  </label>
+                  <input
+                    id="customerMobileNumber"
+                    value={customerMobileNumber}
+                    onChange={(e) => setCustomerMobileNumber(e.target.value)}
+                    placeholder="Enter customer contact number"
+                    className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="deliveryCharge"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Delivery Charge
+                  </label>
+                  <input
+                    id="deliveryCharge"
+                    value={deliveryCharge}
+                    onChange={(e) => setDeliveryCharge(e.target.value)}
+                    placeholder="Enter delivery charge"
+                    className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Select Delivery Driver
+                  </label>
+                  <Popover
+                    open={openDriverSelect}
+                    onOpenChange={setOpenDriverSelect}
+                  >
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="p-2 border border-gray-300 rounded-md bg-white w-full text-left text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex justify-between items-center"
+                      >
+                        {selectedDriver
+                          ? selectedDriver.username
+                          : "Select driver..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full m-10">
+                      <Command>
+                        <CommandInput placeholder="Search drivers..." />
+                        <CommandList>
+                          <CommandEmpty>No driver found.</CommandEmpty>
+                          <CommandGroup>
+                            {deliveryDriversList?.results.map((driver) => (
+                              <CommandItem
+                                key={driver.id}
+                                value={driver.username}
+                                onSelect={() => {
+                                  setSelectedDriver(driver);
+                                  setOpenDriverSelect(false);
+                                }}
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${
+                                    selectedDriver?.id === driver.id
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  }`}
+                                />
+                                {driver.username}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowOrderTypeModal(false)}
+                className="px-5 py-2 rounded-md text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200 ease-in-out"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleOrderTypeChange}
+                className="px-5 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200 ease-in-out"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="hidden">
         <div ref={kitchenPrintRef}>

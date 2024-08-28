@@ -82,6 +82,13 @@ class PasscodeLoginSerializer(serializers.Serializer):
             "access": str(refresh.access_token),
         }
 
+# serializer to change the logo for the company
+
+class LogoInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LogoInfo
+        fields = '__all__'
+        
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -266,6 +273,26 @@ class OrderStatusUpdateSerializer(serializers.Serializer):
 
         instance.save()
         return instance
+    
+
+# serializer for updating the the order type
+
+class OrderTypeChangeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['order_type', 'customer_name', 'address', 'customer_phone_number', 'delivery_charge', 'delivery_driver_id']
+
+    def validate(self, data):
+        if data['order_type'] == 'delivery':
+            if not data.get('customer_name'):
+                raise serializers.ValidationError("Customer name is required for delivery orders.")
+            if not data.get('address'):
+                raise serializers.ValidationError("Delivery address is required for delivery orders.")
+            if not data.get('customer_phone_number'):
+                raise serializers.ValidationError("Customer phone number is required for delivery orders.")
+            if not data.get('delivery_driver_id'):
+                raise serializers.ValidationError("A delivery driver must be assigned for delivery orders.")
+        return data 
 
     
 class BillSerializer(serializers.ModelSerializer):

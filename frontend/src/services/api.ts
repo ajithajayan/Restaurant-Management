@@ -125,6 +125,34 @@ export const updateOrderStatusNew = async (
   );
   return response.data;
 };
+
+
+// order type update
+
+export const updateOrderType = async (
+  orderId: number,
+  orderType: "dining" | "takeaway" | "delivery",
+  deliveryData?: {
+    customer_name?: string;
+    address?: string;
+    customer_phone_number?: string;
+    delivery_charge?: number;
+    delivery_driver_id?: number;
+  }
+) => {
+  const url = `/orders/${orderId}/change-type/`;
+
+  const payload = {
+    order_type: orderType,
+    ...deliveryData, // Spread in deliveryData if it's provided
+  };
+
+  const response = await api.put(url, payload);
+  return response.data;
+};
+
+
+
 export const deleteOrder = async (orderId: number) => {
   const response = await api.delete<Order>(`/orders/${orderId}/`);
   return response.data;

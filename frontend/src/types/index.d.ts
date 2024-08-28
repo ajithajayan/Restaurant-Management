@@ -13,12 +13,13 @@
       category: number | Category;
     }
 
-    export interface OrderItem {
-      dish: number;
-      quantity: number;
-      variants?: { variantId: number; name: string; quantity: number }[];
+export interface OrderItem {
+  is_newly_added: boolean | undefined;
+  dish: number;
+  quantity: number;
+  variants?: { variantId: number; name: string; quantity: number }[];
+}
 
-    }
 
     export interface Order {
       detail: Order;

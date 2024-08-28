@@ -48,4 +48,6 @@ admin.site.register(MessType, UnflodModelAdmin)
 admin.site.register(CreditUser, UnflodModelAdmin)
 admin.site.register(CreditOrder, UnflodModelAdmin)
 admin.site.register(Transaction,UnflodModelAdmin)
+
+admin.site.register(LogoInfo)
 admin.site.register(DishVariant,UnflodModelAdmin)
