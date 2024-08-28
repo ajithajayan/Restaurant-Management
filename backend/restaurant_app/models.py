@@ -88,6 +88,14 @@ class Dish(models.Model):
         return self.name
 
 
+class DishVariant(models.Model):
+    dish = models.ForeignKey(Dish, on_delete=models.CASCADE, related_name="variants")
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return f"{self.name} ({self.dish.name})"
+
+
 class Order(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pending"),
@@ -133,6 +141,7 @@ class Order(models.Model):
     delivery_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     delivery_driver_id = models.IntegerField(null=True, blank=True)
     credit_user_id = models.IntegerField(null=True, blank=True)
+    kitchen_note = models.TextField(blank=True)
 
     class Meta:
         ordering = ("-created_at",)
@@ -158,6 +167,7 @@ class OrderItem(models.Model):
     dish = models.ForeignKey(Dish, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     is_newly_added = models.BooleanField(default=False)
+    variants = models.JSONField(default=list)
 
     def __str__(self):
         return f"{self.order.id} - {self.dish} - {self.quantity}"

@@ -44,6 +44,7 @@ interface DishItemWithToggleProps extends DishItemProps {
 const DishItem: React.FC<DishItemWithToggleProps> = ({ dish, onAddDish, showImage }) => {
   return (
     <div
+      onClick={() => onAddDish(dish)}
       className={`flex flex-col justify-between bg-white shadow-md rounded-lg p-4 transition-all duration-300 ${
         showImage ? "w-full" : "w-full" 
       }`}
@@ -61,7 +62,10 @@ const DishItem: React.FC<DishItemWithToggleProps> = ({ dish, onAddDish, showImag
         <span className="text-lg font-bold">QAR {dish.price}</span>
         <Button
           variant="ghost"
-          onClick={() => onAddDish(dish)}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent the outer div click event from being triggered
+            onAddDish(dish);
+          }}
           className="ml-2"
         >
           <Plus size={24} />

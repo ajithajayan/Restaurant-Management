@@ -109,12 +109,17 @@ class DishSerializer(serializers.ModelSerializer):
         ]
 
 
+class DishVariantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DishVariant
+        fields = ['id', 'name','dish']
+
 class OrderItemSerializer(serializers.ModelSerializer):
     dish = serializers.PrimaryKeyRelatedField(queryset=Dish.objects.all())
 
     class Meta:
         model = OrderItem
-        fields = ["dish", "quantity","is_newly_added"]
+        fields = ["dish", "quantity","is_newly_added","variants"]
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -146,6 +151,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "delivery_driver",
             "credit_user_id",
             "delivery_order_status",
+            "kitchen_note"
         ]
 
     def create(self, validated_data):
