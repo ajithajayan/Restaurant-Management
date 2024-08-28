@@ -8,6 +8,8 @@ import DishList from "../components/Dishes/DishList";
 import OrderItem from "../components/Orders/OrderItem";
 import { useDishes } from "../hooks/useDishes";
 import { useOrders } from "../hooks/useOrders";
+import MemoModal from "@/components/modals/MemoModal";
+import KitchenNoteModal from "@/components/modals/KitchenNoteModal";
 import {
   Dish,
   Category,
@@ -38,7 +40,6 @@ import {
 } from "@/components/ui/command";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Loader from "@/components/Layout/Loader";
-
 type OrderType = "dining" | "takeaway" | "delivery";
 
 type OrderDish = Dish & { quantity: number };
@@ -73,8 +74,12 @@ const DishesPage: React.FC = () => {
   const [deliveryCharge, setDeliveryCharge] = useState("0.00");
   const [openDriverSelect, setOpenDriverSelect] = useState(false);
   const [error, setError] = useState("");
+  const [isMemoModalOpen, setIsMemoModalOpen] = useState(false);
+  const [isKitchenNoteModalOpen, setIsKitchenNoteModalOpen] = useState(false);
+  const [kitchenNote, setKitchenNote] = useState('');
 
   const data = dishes?.results || [];
+  
 
   const handleAddDish = (dish: Dish) => {
     addDishToOrder(dish.id, 1);
@@ -126,6 +131,11 @@ const DishesPage: React.FC = () => {
         items: orderItems.map((item) => ({
           dish: item.id,
           quantity: item.quantity || 0,
+          variants: item.variants ? item.variants.map((variant) => ({
+            variantId: variant.variantId,
+            name: variant.name,
+            quantity: variant.quantity,
+          })) : []
         })),
         total_amount: parseFloat(total.toFixed(2)),
         status: "pending",
@@ -135,7 +145,8 @@ const DishesPage: React.FC = () => {
         customer_phone_number: orderType === "delivery" ? customerMobileNumber : "",
         delivery_charge: orderType === "delivery" ? parseFloat(deliveryCharge) : 0,
         delivery_driver_id:
-          orderType === "delivery" && selectedDriver ? selectedDriver.id : null,
+        orderType === "delivery" && selectedDriver ? selectedDriver.id : null,
+        kitchen_note: kitchenNote,
       };
 
       createOrder(orderData);
@@ -147,6 +158,29 @@ const DishesPage: React.FC = () => {
       setError("An error occurred while creating the order. Please try again.");
     }
   };
+
+  const handleOpenKitchenNoteModal = () => {
+    setIsKitchenNoteModalOpen(true);
+  };
+
+  const handleSaveKitchenNote = (note: string) => {
+    setKitchenNote(note);
+    // Pass the note to the parent component or handle it as needed
+  };
+
+  const handleUpdateOrderItems = (updatedItems: OrderDish[]) => {
+    setOrderItems(updatedItems); // Update the orderItems state with the new data
+  };
+  console.log("kitchennote", kitchenNote);
+
+  const handleOpenMemoModal = () => {
+    setIsMemoModalOpen(true);
+  };
+
+  const handleCloseMemoModal = () => {
+    setIsMemoModalOpen(false);
+  };
+
 
   const handleCloseBtnClick = () => {
     fetchUnreadCount();
@@ -252,12 +286,21 @@ const DishesPage: React.FC = () => {
               Next
             </Button>
           </div>
+          {orderItems.length > 0 && (
+            <div className="flex justify-center mt-4 space-x-4">
+              <Button variant="outline" onClick={handleOpenMemoModal}>
+                Memo
+              </Button>
+              <Button variant="outline" onClick={handleOpenKitchenNoteModal}>
+                Kitchen Note
+              </Button>
+            </div>
+          )}
         </div>
         {orderItems.length > 0 && (
           <div
-            className={`w-full lg:w-[550px] bg-white p-8 mt-2 ${
-              isOrderVisible ? "block" : "hidden lg:block"
-            }`}
+            className={`w-full lg:w-[550px] bg-white p-8 mt-2 ${isOrderVisible ? "block" : "hidden lg:block"
+              }`}
           >
             <div className="sticky top-0">
               <h2 className="text-2xl font-bold mb-4">New Order</h2>
@@ -299,13 +342,13 @@ const DishesPage: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="delivery" id="delivery" className="h-5 w-5" />
-                    <Label htmlFor="delivery"className="text-sm">Delivery</Label>
+                    <Label htmlFor="delivery" className="text-sm">Delivery</Label>
                   </div>
                 </RadioGroup>
               </div>
               {orderType === "delivery" && (
                 <>
-                <div className="mt-4 flex flex-col gap-2">
+                  <div className="mt-4 flex flex-col gap-2">
                     <Label htmlFor="customerName">Customer Name</Label>
                     <Input
                       id="customerName"
@@ -376,11 +419,10 @@ const DishesPage: React.FC = () => {
                                   }}
                                 >
                                   <Check
-                                    className={`mr-2 h-4 w-4 ${
-                                      selectedDriver?.id === driver.id
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    }`}
+                                    className={`mr-2 h-4 w-4 ${selectedDriver?.id === driver.id
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                      }`}
                                   />
                                   {driver.username}
                                 </CommandItem>
@@ -405,6 +447,18 @@ const DishesPage: React.FC = () => {
             </div>
           </div>
         )}
+        {/* Memo Modal */}
+        <MemoModal
+          isOpen={isMemoModalOpen}
+          onClose={handleCloseMemoModal}
+          orderItems={orderItems}
+          onUpdateOrderItems={handleUpdateOrderItems} // Pass the callback function to MemoModal
+        />
+        <KitchenNoteModal
+          isOpen={isKitchenNoteModalOpen}
+          onClose={() => setIsKitchenNoteModalOpen(false)}
+          onSave={handleSaveKitchenNote}
+        />
       </div>
       {showSuccessModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">

@@ -28,6 +28,7 @@ from restaurant_app.views import (
     CreditUserViewSet,
     CreditOrderViewSet,
     TransactionViewSet,
+    DishVariantViewSet
 
 )
 from delivery_drivers.views import (
@@ -40,6 +41,7 @@ router = DefaultRouter()
 
 router.register(r"login", LoginViewSet, basename="login")
 router.register(r"dishes", DishViewSet, basename="dishes")
+router.register(r'variants', DishVariantViewSet, basename="variants")
 router.register(r"categories", CategoryViewSet, basename="categories")
 router.register(r"orders", OrderViewSet, basename="orders")
 router.register(r"bills", BillViewSet, basename="bills")

@@ -232,6 +232,7 @@ const SalesReportPage: React.FC = () => {
           break;
         case "Credit":
           filter = { payment_method: "credit"};
+          break;
         case "Canceled":
           filter = { order_status: "cancelled" };
           break;
