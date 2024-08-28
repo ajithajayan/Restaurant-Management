@@ -95,6 +95,19 @@ class DishViewSet(viewsets.ModelViewSet):
     ordering_fields = ["name", "price"]
 
 
+class DishVariantViewSet(viewsets.ModelViewSet):
+    queryset = DishVariant.objects.all()
+    serializer_class = DishVariantSerializer
+
+    def get_queryset(self):
+        queryset = DishVariant.objects.all()
+        dish_id = self.request.query_params.get('dish_id')
+        
+        if dish_id is not None:
+            queryset = queryset.filter(dish_id=dish_id)
+        
+        return queryset
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
