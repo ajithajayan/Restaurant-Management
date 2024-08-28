@@ -111,6 +111,8 @@ const OrderCard: React.FC<OrderCardProps> = ({
       setBillType("kitchen");
       setShowModal(true);
       setStatus(newStatus);
+      console.log(newStatus);
+      
       try {
         await updateOrderStatusNew(order.id, "approved");
         onStatusUpdated(); // Refresh orders after status change
