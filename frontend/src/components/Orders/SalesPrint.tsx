@@ -21,10 +21,18 @@ const SalesPrint: React.FC<SalesPrintProps> = ({ order, dishes }) => {
 
   const totalQuantity = order.items.reduce((total, item) => total + item.quantity, 0);
 
+  // Log the payment method to the console
+  console.log(order.payment_method);
+
   return (
     <div className="print-container w-64 p-4 text-sm bg-white border-2 border-dashed rounded-lg mx-auto">
       <h1 className="text-center text-lg font-bold mb-2">Sales Receipt</h1>
-      <div className="print-order-id mb-2">Order_id #{order.id}</div>
+      <div className="flex justify-between mb-2">
+        <div className="print-order-id">Order_id #{order.id}</div>
+        {order.payment_method === "credit" && (
+          <div className="text-right font-bold text-red-500 ml-4">Credit</div>
+        )}
+      </div>
       <div className="print-date mb-2">Date: {formatDate(order.created_at)}</div>
       <div className="print-time mb-2">Time: {formatTime(order.created_at)}</div>
       <div className="print-items">
@@ -52,11 +60,11 @@ const SalesPrint: React.FC<SalesPrintProps> = ({ order, dishes }) => {
       </div>
       <div className="print-summary mt-4">
         <div className="flex justify-between">
-          <span >Total Quantity:</span>
-          <span className="font-bold">{totalQuantity} </span>
+          <span>Total Quantity:</span>
+          <span className="font-bold">{totalQuantity}</span>
         </div>
         <div className="flex justify-between mt-2">
-          <span >Total Amount:</span>
+          <span>Total Amount:</span>
           <span className="font-bold">QAR {order.total_amount}</span>
         </div>
       </div>

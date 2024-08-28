@@ -25,10 +25,12 @@ const KitchenPrint: React.FC<KitchenPrintProps> = ({ order, dishes }) => {
   const renderItems = (items: any[]) => {
     return items.map((item, index) => {
       const dish = dishes.find(dish => dish.id === item.dish);
+      const itemTotal = dish ? (dish.price * item.quantity).toFixed(2) : '0.00';
       return (
         <tr key={index} className="print-item">
           <td className="print-item-name">{dish ? dish.name : 'Unknown Dish'}</td>
           <td className="print-item-quantity text-right">x {item.quantity}</td>
+          <td className="print-item-total text-right">QAR {itemTotal}</td>
         </tr>
       );
     });
@@ -50,6 +52,7 @@ const KitchenPrint: React.FC<KitchenPrintProps> = ({ order, dishes }) => {
                 <tr>
                   <th className="text-left">Item</th>
                   <th className="text-right">Qty</th>
+                  <th className="text-right">Amount</th>
                 </tr>
               </thead>
               <tbody>
@@ -71,6 +74,7 @@ const KitchenPrint: React.FC<KitchenPrintProps> = ({ order, dishes }) => {
                 <tr>
                   <th className="text-left">Item</th>
                   <th className="text-right">Qty</th>
+                  <th className="text-right">Amount</th>
                 </tr>
               </thead>
               <tbody>

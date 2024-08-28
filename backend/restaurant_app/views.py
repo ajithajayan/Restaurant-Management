@@ -16,6 +16,7 @@ from django.db.models import Q
 from django.db.models.functions import TruncDate, TruncHour
 from restaurant_app.models import *
 from restaurant_app.serializers import *
+from rest_framework.decorators import api_view
 
 
 User = get_user_model()
@@ -347,7 +348,23 @@ class OrderStatusUpdateViewSet(viewsets.GenericViewSet):
 
             return Response({"detail": "Order updated successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
+# view for changing the order type
+
+class OrderTypeChangeViewSet(viewsets.ViewSet):
+    @action(detail=True, methods=['put'], url_path='change-type')
+    def change_order_type(self, request, pk=None):
+        try:
+            order = Order.objects.get(pk=pk)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = OrderTypeChangeSerializer(order, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class BillViewSet(viewsets.ModelViewSet):
     queryset = Bill.objects.all()
