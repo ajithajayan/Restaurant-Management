@@ -82,6 +82,13 @@ class PasscodeLoginSerializer(serializers.Serializer):
             "access": str(refresh.access_token),
         }
 
+# serializer to change the logo for the company
+
+class LogoInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LogoInfo
+        fields = '__all__'
+        
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:

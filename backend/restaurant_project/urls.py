@@ -10,6 +10,7 @@ from rest_framework_simplejwt.views import (
 from restaurant_app.views import (
     CategoryViewSet,
     DishViewSet,
+    LogoInfoViewSet,
     OrderStatusUpdateViewSet,
     OrderViewSet,
     NotificationViewSet,
@@ -68,6 +69,10 @@ router.register(r'order-status', OrderStatusUpdateViewSet, basename='order-statu
 # to change the type of the order   
 
 router.register(r'orders', OrderTypeChangeViewSet, basename='order')
+
+# to change the logo of the users
+
+router.register(r'logo-info', LogoInfoViewSet, basename='logoinfo')
 
 
 urlpatterns = [

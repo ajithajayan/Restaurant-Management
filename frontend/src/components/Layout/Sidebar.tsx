@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
+import axios from "axios"; // Import axios to make API requests
 import {
   Tooltip,
   TooltipContent,
@@ -23,9 +24,30 @@ import {
 } from "lucide-react";
 import LogoutBtn from "./LogoutBtn";
 import NotificationBadge from "./NotificationBadge";
+import { api } from "@/services/api";
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
+  const [mainLogoUrl, setMainLogoUrl] = useState<string>("/images/default_logo.png"); // Default logo
+
+  useEffect(() => {
+    // Fetch the logo information from the API
+    const fetchLogoInfo = async () => {
+      try {
+        const response = await api.get("/logo-info/");
+        if (response.data.results && response.data.results.length > 0) {
+          const logoInfo = response.data.results[0]; // Get the first result
+          if (logoInfo.main_logo) {
+            setMainLogoUrl(logoInfo.main_logo); // Set the main logo from the API
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch logo info:", error);
+      }
+    };
+
+    fetchLogoInfo();
+  }, []);
 
   const isActive = (path: string) => {
     return location.pathname === path
@@ -82,8 +104,16 @@ const Sidebar: React.FC = () => {
   return (
     <div className="w-20 md:w-64 bg-white p-4 h-screen border-r border-gray-300 flex flex-col">
       <Link to="/" className="mb-8 flex justify-center md:justify-start">
-        <img src="/images/nasscript_full_banner_logo.png" alt="Logo" className="hidden sm:block h-8 w-auto" />
-        <img src="/images/nasscript_logo.png" alt="Logo" className="block sm:hidden h-8 w-8" />
+        <img
+          src={mainLogoUrl}
+          alt="Logo"
+          className="hidden sm:block h-8 w-auto"
+        />
+        <img
+          src={mainLogoUrl}
+          alt="Logo"
+          className="block sm:hidden h-8 w-8"
+        />
       </Link>
       <div className="overflow-y-auto overflow-x-hidden invisible-scrollbar flex flex-col justify-between h-screen">
         <nav className="flex-grow mr-2">
@@ -128,13 +158,16 @@ const Sidebar: React.FC = () => {
         <p className="hidden sm:block text-black-600 text-md md:text-md font-bold">
           Powered by
         </p>
-        {/* <img
+        <img
+          src="/images/nasscript_full_banner_logo.png"
+          alt="Logo"
+          className="hidden sm:block h-5 w-auto"
+        />
+        <img
           src="/images/nasscript_logo.png"
-          alt="logo"
-          className="ml-2 w-5 h-5"
-        /> */}
-         <img src="/images/nasscript_full_banner_logo.png" alt="Logo" className="hidden sm:block h-5 w-auto" />
-         <img src="/images/nasscript_logo.png" alt="Logo" className="block sm:hidden h-5 w-5" />
+          alt="Logo"
+          className="block sm:hidden h-5 w-5"
+        />
       </a>
     </div>
   );

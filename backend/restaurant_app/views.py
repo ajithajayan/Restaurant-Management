@@ -75,6 +75,12 @@ class LogoutView(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+# view set to change the logo info
+class LogoInfoViewSet(viewsets.ModelViewSet):
+    queryset = LogoInfo.objects.all()
+    serializer_class = LogoInfoSerializer
+
+    
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()

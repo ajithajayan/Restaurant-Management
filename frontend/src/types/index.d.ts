@@ -14,6 +14,7 @@ export interface Dish {
 }
 
 export interface OrderItem {
+  is_newly_added: boolean | undefined;
   dish: number;
   quantity: number;
 }
