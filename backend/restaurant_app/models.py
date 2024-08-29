@@ -195,6 +195,7 @@ class Bill(models.Model):
         super().save(*args, **kwargs)
 
 
+
 class Notification(models.Model):
     user = models.ForeignKey(
         User,
